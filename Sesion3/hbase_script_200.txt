@@ -1,0 +1,1909 @@
+# ==============================================================================
+# SCRIPT COMPLETO DE HBASE SHELL (MÁS DE 200 REGISTROS + OPERACIONES CRUD)
+# ==============================================================================
+# Este archivo contiene la secuencia completa de comandos para ejecutar en Apache HBase Shell.
+# Modo de ejecución en Docker:
+#   docker exec -i hbase hbase shell < hbase_script_200.txt
+# O dentro de HBase Shell:
+#   hbase(main):001:0> load '/ruta/a/hbase_script_200.txt'
+# ==============================================================================
+
+# ------------------------------------------------------------------------------
+# PASO 1: CONFIGURACIÓN INICIAL Y LIMPIEZA DE TABLA (DDL)
+# ------------------------------------------------------------------------------
+# En HBase, para modificar o eliminar una tabla existente, primero es OBLIGATORIO
+# desactivarla con 'disable'. Si la tabla no existe, el bloque ignora el error.
+
+disable 'estudiantes_bigdata'
+drop 'estudiantes_bigdata'
+
+# Creación de la tabla 'estudiantes_bigdata' con 3 Familias de Columnas (Column Families):
+#   - 'personal': Datos identificativos del estudiante (nombre, edad, ciudad)
+#   - 'academico': Calificaciones, módulo y estado
+#   - 'contacto': Email y teléfono
+# Nota: Configuramos VERSIONS => 3 en 'academico' para mantener el historial de notas.
+
+create 'estudiantes_bigdata', 
+  {NAME => 'personal'}, 
+  {NAME => 'academico', VERSIONS => 3}, 
+  {NAME => 'contacto'}
+
+# Verificación de la estructura creada
+describe 'estudiantes_bigdata'
+
+# ------------------------------------------------------------------------------
+# PASO 2: INSERCIÓN MASIVA DE DATOS (DML - 200 ESTUDIANTES / +600 CELDAS)
+# ------------------------------------------------------------------------------
+# La sintaxis de inserción es: put 'nombre_tabla', 'RowKey', 'familia:cualificador', 'valor'
+# Utilizaremos una RowKey formateada con ceros a la izquierda (ej. EST_001, EST_002...)
+# para asegurar el ordenamiento lexicográfico correcto en las regiones de HBase.
+
+# Inserción para estudiante EST_001
+put 'estudiantes_bigdata', 'EST_001', 'personal:nombre', 'Ana Fernandez'
+put 'estudiantes_bigdata', 'EST_001', 'personal:edad', '21'
+put 'estudiantes_bigdata', 'EST_001', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_001', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_001', 'academico:nota', '5.7'
+put 'estudiantes_bigdata', 'EST_001', 'contacto:email', 'estudiante1@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_001', 'contacto:telefono', '+34600000001'
+
+# Inserción para estudiante EST_002
+put 'estudiantes_bigdata', 'EST_002', 'personal:nombre', 'Luis Sanchez'
+put 'estudiantes_bigdata', 'EST_002', 'personal:edad', '22'
+put 'estudiantes_bigdata', 'EST_002', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_002', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_002', 'academico:nota', '6.4'
+put 'estudiantes_bigdata', 'EST_002', 'contacto:email', 'estudiante2@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_002', 'contacto:telefono', '+34600000002'
+
+# Inserción para estudiante EST_003
+put 'estudiantes_bigdata', 'EST_003', 'personal:nombre', 'Maria Diaz'
+put 'estudiantes_bigdata', 'EST_003', 'personal:edad', '23'
+put 'estudiantes_bigdata', 'EST_003', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_003', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_003', 'academico:nota', '7.1'
+put 'estudiantes_bigdata', 'EST_003', 'contacto:email', 'estudiante3@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_003', 'contacto:telefono', '+34600000003'
+
+# Inserción para estudiante EST_004
+put 'estudiantes_bigdata', 'EST_004', 'personal:nombre', 'Juan Rodriguez'
+put 'estudiantes_bigdata', 'EST_004', 'personal:edad', '24'
+put 'estudiantes_bigdata', 'EST_004', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_004', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_004', 'academico:nota', '7.8'
+put 'estudiantes_bigdata', 'EST_004', 'contacto:email', 'estudiante4@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_004', 'contacto:telefono', '+34600000004'
+
+# Inserción para estudiante EST_005
+put 'estudiantes_bigdata', 'EST_005', 'personal:nombre', 'Elena Martinez'
+put 'estudiantes_bigdata', 'EST_005', 'personal:edad', '25'
+put 'estudiantes_bigdata', 'EST_005', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_005', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_005', 'academico:nota', '8.5'
+put 'estudiantes_bigdata', 'EST_005', 'contacto:email', 'estudiante5@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_005', 'contacto:telefono', '+34600000005'
+
+# Inserción para estudiante EST_006
+put 'estudiantes_bigdata', 'EST_006', 'personal:nombre', 'Pedro Ruiz'
+put 'estudiantes_bigdata', 'EST_006', 'personal:edad', '26'
+put 'estudiantes_bigdata', 'EST_006', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_006', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_006', 'academico:nota', '9.2'
+put 'estudiantes_bigdata', 'EST_006', 'contacto:email', 'estudiante6@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_006', 'contacto:telefono', '+34600000006'
+
+# Inserción para estudiante EST_007
+put 'estudiantes_bigdata', 'EST_007', 'personal:nombre', 'Sofia Perez'
+put 'estudiantes_bigdata', 'EST_007', 'personal:edad', '27'
+put 'estudiantes_bigdata', 'EST_007', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_007', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_007', 'academico:nota', '9.9'
+put 'estudiantes_bigdata', 'EST_007', 'contacto:email', 'estudiante7@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_007', 'contacto:telefono', '+34600000007'
+
+# Inserción para estudiante EST_008
+put 'estudiantes_bigdata', 'EST_008', 'personal:nombre', 'Diego Lopez'
+put 'estudiantes_bigdata', 'EST_008', 'personal:edad', '28'
+put 'estudiantes_bigdata', 'EST_008', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_008', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_008', 'academico:nota', '5.5'
+put 'estudiantes_bigdata', 'EST_008', 'contacto:email', 'estudiante8@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_008', 'contacto:telefono', '+34600000008'
+
+# Inserción para estudiante EST_009
+put 'estudiantes_bigdata', 'EST_009', 'personal:nombre', 'Lucia Navarro'
+put 'estudiantes_bigdata', 'EST_009', 'personal:edad', '29'
+put 'estudiantes_bigdata', 'EST_009', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_009', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_009', 'academico:nota', '6.2'
+put 'estudiantes_bigdata', 'EST_009', 'contacto:email', 'estudiante9@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_009', 'contacto:telefono', '+34600000009'
+
+# Inserción para estudiante EST_010
+put 'estudiantes_bigdata', 'EST_010', 'personal:nombre', 'Gabriel Gomez'
+put 'estudiantes_bigdata', 'EST_010', 'personal:edad', '30'
+put 'estudiantes_bigdata', 'EST_010', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_010', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_010', 'academico:nota', '6.9'
+put 'estudiantes_bigdata', 'EST_010', 'contacto:email', 'estudiante10@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_010', 'contacto:telefono', '+34600000010'
+
+# Inserción para estudiante EST_011
+put 'estudiantes_bigdata', 'EST_011', 'personal:nombre', 'Carmen Fernandez'
+put 'estudiantes_bigdata', 'EST_011', 'personal:edad', '31'
+put 'estudiantes_bigdata', 'EST_011', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_011', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_011', 'academico:nota', '7.6'
+put 'estudiantes_bigdata', 'EST_011', 'contacto:email', 'estudiante11@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_011', 'contacto:telefono', '+34600000011'
+
+# Inserción para estudiante EST_012
+put 'estudiantes_bigdata', 'EST_012', 'personal:nombre', 'Javier Sanchez'
+put 'estudiantes_bigdata', 'EST_012', 'personal:edad', '32'
+put 'estudiantes_bigdata', 'EST_012', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_012', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_012', 'academico:nota', '8.3'
+put 'estudiantes_bigdata', 'EST_012', 'contacto:email', 'estudiante12@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_012', 'contacto:telefono', '+34600000012'
+
+# Inserción para estudiante EST_013
+put 'estudiantes_bigdata', 'EST_013', 'personal:nombre', 'Marta Diaz'
+put 'estudiantes_bigdata', 'EST_013', 'personal:edad', '33'
+put 'estudiantes_bigdata', 'EST_013', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_013', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_013', 'academico:nota', '9.0'
+put 'estudiantes_bigdata', 'EST_013', 'contacto:email', 'estudiante13@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_013', 'contacto:telefono', '+34600000013'
+
+# Inserción para estudiante EST_014
+put 'estudiantes_bigdata', 'EST_014', 'personal:nombre', 'Fernando Rodriguez'
+put 'estudiantes_bigdata', 'EST_014', 'personal:edad', '34'
+put 'estudiantes_bigdata', 'EST_014', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_014', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_014', 'academico:nota', '9.7'
+put 'estudiantes_bigdata', 'EST_014', 'contacto:email', 'estudiante14@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_014', 'contacto:telefono', '+34600000014'
+
+# Inserción para estudiante EST_015
+put 'estudiantes_bigdata', 'EST_015', 'personal:nombre', 'Laura Martinez'
+put 'estudiantes_bigdata', 'EST_015', 'personal:edad', '35'
+put 'estudiantes_bigdata', 'EST_015', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_015', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_015', 'academico:nota', '5.3'
+put 'estudiantes_bigdata', 'EST_015', 'contacto:email', 'estudiante15@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_015', 'contacto:telefono', '+34600000015'
+
+# Inserción para estudiante EST_016
+put 'estudiantes_bigdata', 'EST_016', 'personal:nombre', 'Pablo Ruiz'
+put 'estudiantes_bigdata', 'EST_016', 'personal:edad', '36'
+put 'estudiantes_bigdata', 'EST_016', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_016', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_016', 'academico:nota', '6.0'
+put 'estudiantes_bigdata', 'EST_016', 'contacto:email', 'estudiante16@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_016', 'contacto:telefono', '+34600000016'
+
+# Inserción para estudiante EST_017
+put 'estudiantes_bigdata', 'EST_017', 'personal:nombre', 'Beatriz Perez'
+put 'estudiantes_bigdata', 'EST_017', 'personal:edad', '37'
+put 'estudiantes_bigdata', 'EST_017', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_017', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_017', 'academico:nota', '6.7'
+put 'estudiantes_bigdata', 'EST_017', 'contacto:email', 'estudiante17@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_017', 'contacto:telefono', '+34600000017'
+
+# Inserción para estudiante EST_018
+put 'estudiantes_bigdata', 'EST_018', 'personal:nombre', 'Hugo Lopez'
+put 'estudiantes_bigdata', 'EST_018', 'personal:edad', '38'
+put 'estudiantes_bigdata', 'EST_018', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_018', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_018', 'academico:nota', '7.4'
+put 'estudiantes_bigdata', 'EST_018', 'contacto:email', 'estudiante18@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_018', 'contacto:telefono', '+34600000018'
+
+# Inserción para estudiante EST_019
+put 'estudiantes_bigdata', 'EST_019', 'personal:nombre', 'Irene Navarro'
+put 'estudiantes_bigdata', 'EST_019', 'personal:edad', '39'
+put 'estudiantes_bigdata', 'EST_019', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_019', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_019', 'academico:nota', '8.1'
+put 'estudiantes_bigdata', 'EST_019', 'contacto:email', 'estudiante19@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_019', 'contacto:telefono', '+34600000019'
+
+# Inserción para estudiante EST_020
+put 'estudiantes_bigdata', 'EST_020', 'personal:nombre', 'Carlos Gomez'
+put 'estudiantes_bigdata', 'EST_020', 'personal:edad', '40'
+put 'estudiantes_bigdata', 'EST_020', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_020', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_020', 'academico:nota', '8.8'
+put 'estudiantes_bigdata', 'EST_020', 'contacto:email', 'estudiante20@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_020', 'contacto:telefono', '+34600000020'
+
+# Inserción para estudiante EST_021
+put 'estudiantes_bigdata', 'EST_021', 'personal:nombre', 'Ana Fernandez'
+put 'estudiantes_bigdata', 'EST_021', 'personal:edad', '41'
+put 'estudiantes_bigdata', 'EST_021', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_021', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_021', 'academico:nota', '9.5'
+put 'estudiantes_bigdata', 'EST_021', 'contacto:email', 'estudiante21@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_021', 'contacto:telefono', '+34600000021'
+
+# Inserción para estudiante EST_022
+put 'estudiantes_bigdata', 'EST_022', 'personal:nombre', 'Luis Sanchez'
+put 'estudiantes_bigdata', 'EST_022', 'personal:edad', '42'
+put 'estudiantes_bigdata', 'EST_022', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_022', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_022', 'academico:nota', '5.1'
+put 'estudiantes_bigdata', 'EST_022', 'contacto:email', 'estudiante22@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_022', 'contacto:telefono', '+34600000022'
+
+# Inserción para estudiante EST_023
+put 'estudiantes_bigdata', 'EST_023', 'personal:nombre', 'Maria Diaz'
+put 'estudiantes_bigdata', 'EST_023', 'personal:edad', '43'
+put 'estudiantes_bigdata', 'EST_023', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_023', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_023', 'academico:nota', '5.8'
+put 'estudiantes_bigdata', 'EST_023', 'contacto:email', 'estudiante23@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_023', 'contacto:telefono', '+34600000023'
+
+# Inserción para estudiante EST_024
+put 'estudiantes_bigdata', 'EST_024', 'personal:nombre', 'Juan Rodriguez'
+put 'estudiantes_bigdata', 'EST_024', 'personal:edad', '44'
+put 'estudiantes_bigdata', 'EST_024', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_024', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_024', 'academico:nota', '6.5'
+put 'estudiantes_bigdata', 'EST_024', 'contacto:email', 'estudiante24@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_024', 'contacto:telefono', '+34600000024'
+
+# Inserción para estudiante EST_025
+put 'estudiantes_bigdata', 'EST_025', 'personal:nombre', 'Elena Martinez'
+put 'estudiantes_bigdata', 'EST_025', 'personal:edad', '20'
+put 'estudiantes_bigdata', 'EST_025', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_025', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_025', 'academico:nota', '7.2'
+put 'estudiantes_bigdata', 'EST_025', 'contacto:email', 'estudiante25@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_025', 'contacto:telefono', '+34600000025'
+
+# Inserción para estudiante EST_026
+put 'estudiantes_bigdata', 'EST_026', 'personal:nombre', 'Pedro Ruiz'
+put 'estudiantes_bigdata', 'EST_026', 'personal:edad', '21'
+put 'estudiantes_bigdata', 'EST_026', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_026', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_026', 'academico:nota', '7.9'
+put 'estudiantes_bigdata', 'EST_026', 'contacto:email', 'estudiante26@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_026', 'contacto:telefono', '+34600000026'
+
+# Inserción para estudiante EST_027
+put 'estudiantes_bigdata', 'EST_027', 'personal:nombre', 'Sofia Perez'
+put 'estudiantes_bigdata', 'EST_027', 'personal:edad', '22'
+put 'estudiantes_bigdata', 'EST_027', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_027', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_027', 'academico:nota', '8.6'
+put 'estudiantes_bigdata', 'EST_027', 'contacto:email', 'estudiante27@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_027', 'contacto:telefono', '+34600000027'
+
+# Inserción para estudiante EST_028
+put 'estudiantes_bigdata', 'EST_028', 'personal:nombre', 'Diego Lopez'
+put 'estudiantes_bigdata', 'EST_028', 'personal:edad', '23'
+put 'estudiantes_bigdata', 'EST_028', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_028', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_028', 'academico:nota', '9.3'
+put 'estudiantes_bigdata', 'EST_028', 'contacto:email', 'estudiante28@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_028', 'contacto:telefono', '+34600000028'
+
+# Inserción para estudiante EST_029
+put 'estudiantes_bigdata', 'EST_029', 'personal:nombre', 'Lucia Navarro'
+put 'estudiantes_bigdata', 'EST_029', 'personal:edad', '24'
+put 'estudiantes_bigdata', 'EST_029', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_029', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_029', 'academico:nota', '10.0'
+put 'estudiantes_bigdata', 'EST_029', 'contacto:email', 'estudiante29@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_029', 'contacto:telefono', '+34600000029'
+
+# Inserción para estudiante EST_030
+put 'estudiantes_bigdata', 'EST_030', 'personal:nombre', 'Gabriel Gomez'
+put 'estudiantes_bigdata', 'EST_030', 'personal:edad', '25'
+put 'estudiantes_bigdata', 'EST_030', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_030', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_030', 'academico:nota', '5.6'
+put 'estudiantes_bigdata', 'EST_030', 'contacto:email', 'estudiante30@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_030', 'contacto:telefono', '+34600000030'
+
+# Inserción para estudiante EST_031
+put 'estudiantes_bigdata', 'EST_031', 'personal:nombre', 'Carmen Fernandez'
+put 'estudiantes_bigdata', 'EST_031', 'personal:edad', '26'
+put 'estudiantes_bigdata', 'EST_031', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_031', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_031', 'academico:nota', '6.3'
+put 'estudiantes_bigdata', 'EST_031', 'contacto:email', 'estudiante31@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_031', 'contacto:telefono', '+34600000031'
+
+# Inserción para estudiante EST_032
+put 'estudiantes_bigdata', 'EST_032', 'personal:nombre', 'Javier Sanchez'
+put 'estudiantes_bigdata', 'EST_032', 'personal:edad', '27'
+put 'estudiantes_bigdata', 'EST_032', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_032', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_032', 'academico:nota', '7.0'
+put 'estudiantes_bigdata', 'EST_032', 'contacto:email', 'estudiante32@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_032', 'contacto:telefono', '+34600000032'
+
+# Inserción para estudiante EST_033
+put 'estudiantes_bigdata', 'EST_033', 'personal:nombre', 'Marta Diaz'
+put 'estudiantes_bigdata', 'EST_033', 'personal:edad', '28'
+put 'estudiantes_bigdata', 'EST_033', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_033', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_033', 'academico:nota', '7.7'
+put 'estudiantes_bigdata', 'EST_033', 'contacto:email', 'estudiante33@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_033', 'contacto:telefono', '+34600000033'
+
+# Inserción para estudiante EST_034
+put 'estudiantes_bigdata', 'EST_034', 'personal:nombre', 'Fernando Rodriguez'
+put 'estudiantes_bigdata', 'EST_034', 'personal:edad', '29'
+put 'estudiantes_bigdata', 'EST_034', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_034', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_034', 'academico:nota', '8.4'
+put 'estudiantes_bigdata', 'EST_034', 'contacto:email', 'estudiante34@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_034', 'contacto:telefono', '+34600000034'
+
+# Inserción para estudiante EST_035
+put 'estudiantes_bigdata', 'EST_035', 'personal:nombre', 'Laura Martinez'
+put 'estudiantes_bigdata', 'EST_035', 'personal:edad', '30'
+put 'estudiantes_bigdata', 'EST_035', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_035', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_035', 'academico:nota', '9.1'
+put 'estudiantes_bigdata', 'EST_035', 'contacto:email', 'estudiante35@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_035', 'contacto:telefono', '+34600000035'
+
+# Inserción para estudiante EST_036
+put 'estudiantes_bigdata', 'EST_036', 'personal:nombre', 'Pablo Ruiz'
+put 'estudiantes_bigdata', 'EST_036', 'personal:edad', '31'
+put 'estudiantes_bigdata', 'EST_036', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_036', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_036', 'academico:nota', '9.8'
+put 'estudiantes_bigdata', 'EST_036', 'contacto:email', 'estudiante36@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_036', 'contacto:telefono', '+34600000036'
+
+# Inserción para estudiante EST_037
+put 'estudiantes_bigdata', 'EST_037', 'personal:nombre', 'Beatriz Perez'
+put 'estudiantes_bigdata', 'EST_037', 'personal:edad', '32'
+put 'estudiantes_bigdata', 'EST_037', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_037', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_037', 'academico:nota', '5.4'
+put 'estudiantes_bigdata', 'EST_037', 'contacto:email', 'estudiante37@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_037', 'contacto:telefono', '+34600000037'
+
+# Inserción para estudiante EST_038
+put 'estudiantes_bigdata', 'EST_038', 'personal:nombre', 'Hugo Lopez'
+put 'estudiantes_bigdata', 'EST_038', 'personal:edad', '33'
+put 'estudiantes_bigdata', 'EST_038', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_038', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_038', 'academico:nota', '6.1'
+put 'estudiantes_bigdata', 'EST_038', 'contacto:email', 'estudiante38@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_038', 'contacto:telefono', '+34600000038'
+
+# Inserción para estudiante EST_039
+put 'estudiantes_bigdata', 'EST_039', 'personal:nombre', 'Irene Navarro'
+put 'estudiantes_bigdata', 'EST_039', 'personal:edad', '34'
+put 'estudiantes_bigdata', 'EST_039', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_039', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_039', 'academico:nota', '6.8'
+put 'estudiantes_bigdata', 'EST_039', 'contacto:email', 'estudiante39@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_039', 'contacto:telefono', '+34600000039'
+
+# Inserción para estudiante EST_040
+put 'estudiantes_bigdata', 'EST_040', 'personal:nombre', 'Carlos Gomez'
+put 'estudiantes_bigdata', 'EST_040', 'personal:edad', '35'
+put 'estudiantes_bigdata', 'EST_040', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_040', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_040', 'academico:nota', '7.5'
+put 'estudiantes_bigdata', 'EST_040', 'contacto:email', 'estudiante40@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_040', 'contacto:telefono', '+34600000040'
+
+# Inserción para estudiante EST_041
+put 'estudiantes_bigdata', 'EST_041', 'personal:nombre', 'Ana Fernandez'
+put 'estudiantes_bigdata', 'EST_041', 'personal:edad', '36'
+put 'estudiantes_bigdata', 'EST_041', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_041', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_041', 'academico:nota', '8.2'
+put 'estudiantes_bigdata', 'EST_041', 'contacto:email', 'estudiante41@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_041', 'contacto:telefono', '+34600000041'
+
+# Inserción para estudiante EST_042
+put 'estudiantes_bigdata', 'EST_042', 'personal:nombre', 'Luis Sanchez'
+put 'estudiantes_bigdata', 'EST_042', 'personal:edad', '37'
+put 'estudiantes_bigdata', 'EST_042', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_042', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_042', 'academico:nota', '8.9'
+put 'estudiantes_bigdata', 'EST_042', 'contacto:email', 'estudiante42@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_042', 'contacto:telefono', '+34600000042'
+
+# Inserción para estudiante EST_043
+put 'estudiantes_bigdata', 'EST_043', 'personal:nombre', 'Maria Diaz'
+put 'estudiantes_bigdata', 'EST_043', 'personal:edad', '38'
+put 'estudiantes_bigdata', 'EST_043', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_043', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_043', 'academico:nota', '9.6'
+put 'estudiantes_bigdata', 'EST_043', 'contacto:email', 'estudiante43@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_043', 'contacto:telefono', '+34600000043'
+
+# Inserción para estudiante EST_044
+put 'estudiantes_bigdata', 'EST_044', 'personal:nombre', 'Juan Rodriguez'
+put 'estudiantes_bigdata', 'EST_044', 'personal:edad', '39'
+put 'estudiantes_bigdata', 'EST_044', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_044', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_044', 'academico:nota', '5.2'
+put 'estudiantes_bigdata', 'EST_044', 'contacto:email', 'estudiante44@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_044', 'contacto:telefono', '+34600000044'
+
+# Inserción para estudiante EST_045
+put 'estudiantes_bigdata', 'EST_045', 'personal:nombre', 'Elena Martinez'
+put 'estudiantes_bigdata', 'EST_045', 'personal:edad', '40'
+put 'estudiantes_bigdata', 'EST_045', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_045', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_045', 'academico:nota', '5.9'
+put 'estudiantes_bigdata', 'EST_045', 'contacto:email', 'estudiante45@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_045', 'contacto:telefono', '+34600000045'
+
+# Inserción para estudiante EST_046
+put 'estudiantes_bigdata', 'EST_046', 'personal:nombre', 'Pedro Ruiz'
+put 'estudiantes_bigdata', 'EST_046', 'personal:edad', '41'
+put 'estudiantes_bigdata', 'EST_046', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_046', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_046', 'academico:nota', '6.6'
+put 'estudiantes_bigdata', 'EST_046', 'contacto:email', 'estudiante46@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_046', 'contacto:telefono', '+34600000046'
+
+# Inserción para estudiante EST_047
+put 'estudiantes_bigdata', 'EST_047', 'personal:nombre', 'Sofia Perez'
+put 'estudiantes_bigdata', 'EST_047', 'personal:edad', '42'
+put 'estudiantes_bigdata', 'EST_047', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_047', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_047', 'academico:nota', '7.3'
+put 'estudiantes_bigdata', 'EST_047', 'contacto:email', 'estudiante47@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_047', 'contacto:telefono', '+34600000047'
+
+# Inserción para estudiante EST_048
+put 'estudiantes_bigdata', 'EST_048', 'personal:nombre', 'Diego Lopez'
+put 'estudiantes_bigdata', 'EST_048', 'personal:edad', '43'
+put 'estudiantes_bigdata', 'EST_048', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_048', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_048', 'academico:nota', '8.0'
+put 'estudiantes_bigdata', 'EST_048', 'contacto:email', 'estudiante48@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_048', 'contacto:telefono', '+34600000048'
+
+# Inserción para estudiante EST_049
+put 'estudiantes_bigdata', 'EST_049', 'personal:nombre', 'Lucia Navarro'
+put 'estudiantes_bigdata', 'EST_049', 'personal:edad', '44'
+put 'estudiantes_bigdata', 'EST_049', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_049', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_049', 'academico:nota', '8.7'
+put 'estudiantes_bigdata', 'EST_049', 'contacto:email', 'estudiante49@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_049', 'contacto:telefono', '+34600000049'
+
+# Inserción para estudiante EST_050
+put 'estudiantes_bigdata', 'EST_050', 'personal:nombre', 'Gabriel Gomez'
+put 'estudiantes_bigdata', 'EST_050', 'personal:edad', '20'
+put 'estudiantes_bigdata', 'EST_050', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_050', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_050', 'academico:nota', '9.4'
+put 'estudiantes_bigdata', 'EST_050', 'contacto:email', 'estudiante50@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_050', 'contacto:telefono', '+34600000050'
+
+# Inserción para estudiante EST_051
+put 'estudiantes_bigdata', 'EST_051', 'personal:nombre', 'Carmen Fernandez'
+put 'estudiantes_bigdata', 'EST_051', 'personal:edad', '21'
+put 'estudiantes_bigdata', 'EST_051', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_051', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_051', 'academico:nota', '5.0'
+put 'estudiantes_bigdata', 'EST_051', 'contacto:email', 'estudiante51@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_051', 'contacto:telefono', '+34600000051'
+
+# Inserción para estudiante EST_052
+put 'estudiantes_bigdata', 'EST_052', 'personal:nombre', 'Javier Sanchez'
+put 'estudiantes_bigdata', 'EST_052', 'personal:edad', '22'
+put 'estudiantes_bigdata', 'EST_052', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_052', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_052', 'academico:nota', '5.7'
+put 'estudiantes_bigdata', 'EST_052', 'contacto:email', 'estudiante52@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_052', 'contacto:telefono', '+34600000052'
+
+# Inserción para estudiante EST_053
+put 'estudiantes_bigdata', 'EST_053', 'personal:nombre', 'Marta Diaz'
+put 'estudiantes_bigdata', 'EST_053', 'personal:edad', '23'
+put 'estudiantes_bigdata', 'EST_053', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_053', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_053', 'academico:nota', '6.4'
+put 'estudiantes_bigdata', 'EST_053', 'contacto:email', 'estudiante53@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_053', 'contacto:telefono', '+34600000053'
+
+# Inserción para estudiante EST_054
+put 'estudiantes_bigdata', 'EST_054', 'personal:nombre', 'Fernando Rodriguez'
+put 'estudiantes_bigdata', 'EST_054', 'personal:edad', '24'
+put 'estudiantes_bigdata', 'EST_054', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_054', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_054', 'academico:nota', '7.1'
+put 'estudiantes_bigdata', 'EST_054', 'contacto:email', 'estudiante54@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_054', 'contacto:telefono', '+34600000054'
+
+# Inserción para estudiante EST_055
+put 'estudiantes_bigdata', 'EST_055', 'personal:nombre', 'Laura Martinez'
+put 'estudiantes_bigdata', 'EST_055', 'personal:edad', '25'
+put 'estudiantes_bigdata', 'EST_055', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_055', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_055', 'academico:nota', '7.8'
+put 'estudiantes_bigdata', 'EST_055', 'contacto:email', 'estudiante55@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_055', 'contacto:telefono', '+34600000055'
+
+# Inserción para estudiante EST_056
+put 'estudiantes_bigdata', 'EST_056', 'personal:nombre', 'Pablo Ruiz'
+put 'estudiantes_bigdata', 'EST_056', 'personal:edad', '26'
+put 'estudiantes_bigdata', 'EST_056', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_056', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_056', 'academico:nota', '8.5'
+put 'estudiantes_bigdata', 'EST_056', 'contacto:email', 'estudiante56@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_056', 'contacto:telefono', '+34600000056'
+
+# Inserción para estudiante EST_057
+put 'estudiantes_bigdata', 'EST_057', 'personal:nombre', 'Beatriz Perez'
+put 'estudiantes_bigdata', 'EST_057', 'personal:edad', '27'
+put 'estudiantes_bigdata', 'EST_057', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_057', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_057', 'academico:nota', '9.2'
+put 'estudiantes_bigdata', 'EST_057', 'contacto:email', 'estudiante57@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_057', 'contacto:telefono', '+34600000057'
+
+# Inserción para estudiante EST_058
+put 'estudiantes_bigdata', 'EST_058', 'personal:nombre', 'Hugo Lopez'
+put 'estudiantes_bigdata', 'EST_058', 'personal:edad', '28'
+put 'estudiantes_bigdata', 'EST_058', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_058', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_058', 'academico:nota', '9.9'
+put 'estudiantes_bigdata', 'EST_058', 'contacto:email', 'estudiante58@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_058', 'contacto:telefono', '+34600000058'
+
+# Inserción para estudiante EST_059
+put 'estudiantes_bigdata', 'EST_059', 'personal:nombre', 'Irene Navarro'
+put 'estudiantes_bigdata', 'EST_059', 'personal:edad', '29'
+put 'estudiantes_bigdata', 'EST_059', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_059', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_059', 'academico:nota', '5.5'
+put 'estudiantes_bigdata', 'EST_059', 'contacto:email', 'estudiante59@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_059', 'contacto:telefono', '+34600000059'
+
+# Inserción para estudiante EST_060
+put 'estudiantes_bigdata', 'EST_060', 'personal:nombre', 'Carlos Gomez'
+put 'estudiantes_bigdata', 'EST_060', 'personal:edad', '30'
+put 'estudiantes_bigdata', 'EST_060', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_060', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_060', 'academico:nota', '6.2'
+put 'estudiantes_bigdata', 'EST_060', 'contacto:email', 'estudiante60@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_060', 'contacto:telefono', '+34600000060'
+
+# Inserción para estudiante EST_061
+put 'estudiantes_bigdata', 'EST_061', 'personal:nombre', 'Ana Fernandez'
+put 'estudiantes_bigdata', 'EST_061', 'personal:edad', '31'
+put 'estudiantes_bigdata', 'EST_061', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_061', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_061', 'academico:nota', '6.9'
+put 'estudiantes_bigdata', 'EST_061', 'contacto:email', 'estudiante61@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_061', 'contacto:telefono', '+34600000061'
+
+# Inserción para estudiante EST_062
+put 'estudiantes_bigdata', 'EST_062', 'personal:nombre', 'Luis Sanchez'
+put 'estudiantes_bigdata', 'EST_062', 'personal:edad', '32'
+put 'estudiantes_bigdata', 'EST_062', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_062', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_062', 'academico:nota', '7.6'
+put 'estudiantes_bigdata', 'EST_062', 'contacto:email', 'estudiante62@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_062', 'contacto:telefono', '+34600000062'
+
+# Inserción para estudiante EST_063
+put 'estudiantes_bigdata', 'EST_063', 'personal:nombre', 'Maria Diaz'
+put 'estudiantes_bigdata', 'EST_063', 'personal:edad', '33'
+put 'estudiantes_bigdata', 'EST_063', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_063', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_063', 'academico:nota', '8.3'
+put 'estudiantes_bigdata', 'EST_063', 'contacto:email', 'estudiante63@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_063', 'contacto:telefono', '+34600000063'
+
+# Inserción para estudiante EST_064
+put 'estudiantes_bigdata', 'EST_064', 'personal:nombre', 'Juan Rodriguez'
+put 'estudiantes_bigdata', 'EST_064', 'personal:edad', '34'
+put 'estudiantes_bigdata', 'EST_064', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_064', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_064', 'academico:nota', '9.0'
+put 'estudiantes_bigdata', 'EST_064', 'contacto:email', 'estudiante64@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_064', 'contacto:telefono', '+34600000064'
+
+# Inserción para estudiante EST_065
+put 'estudiantes_bigdata', 'EST_065', 'personal:nombre', 'Elena Martinez'
+put 'estudiantes_bigdata', 'EST_065', 'personal:edad', '35'
+put 'estudiantes_bigdata', 'EST_065', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_065', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_065', 'academico:nota', '9.7'
+put 'estudiantes_bigdata', 'EST_065', 'contacto:email', 'estudiante65@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_065', 'contacto:telefono', '+34600000065'
+
+# Inserción para estudiante EST_066
+put 'estudiantes_bigdata', 'EST_066', 'personal:nombre', 'Pedro Ruiz'
+put 'estudiantes_bigdata', 'EST_066', 'personal:edad', '36'
+put 'estudiantes_bigdata', 'EST_066', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_066', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_066', 'academico:nota', '5.3'
+put 'estudiantes_bigdata', 'EST_066', 'contacto:email', 'estudiante66@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_066', 'contacto:telefono', '+34600000066'
+
+# Inserción para estudiante EST_067
+put 'estudiantes_bigdata', 'EST_067', 'personal:nombre', 'Sofia Perez'
+put 'estudiantes_bigdata', 'EST_067', 'personal:edad', '37'
+put 'estudiantes_bigdata', 'EST_067', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_067', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_067', 'academico:nota', '6.0'
+put 'estudiantes_bigdata', 'EST_067', 'contacto:email', 'estudiante67@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_067', 'contacto:telefono', '+34600000067'
+
+# Inserción para estudiante EST_068
+put 'estudiantes_bigdata', 'EST_068', 'personal:nombre', 'Diego Lopez'
+put 'estudiantes_bigdata', 'EST_068', 'personal:edad', '38'
+put 'estudiantes_bigdata', 'EST_068', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_068', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_068', 'academico:nota', '6.7'
+put 'estudiantes_bigdata', 'EST_068', 'contacto:email', 'estudiante68@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_068', 'contacto:telefono', '+34600000068'
+
+# Inserción para estudiante EST_069
+put 'estudiantes_bigdata', 'EST_069', 'personal:nombre', 'Lucia Navarro'
+put 'estudiantes_bigdata', 'EST_069', 'personal:edad', '39'
+put 'estudiantes_bigdata', 'EST_069', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_069', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_069', 'academico:nota', '7.4'
+put 'estudiantes_bigdata', 'EST_069', 'contacto:email', 'estudiante69@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_069', 'contacto:telefono', '+34600000069'
+
+# Inserción para estudiante EST_070
+put 'estudiantes_bigdata', 'EST_070', 'personal:nombre', 'Gabriel Gomez'
+put 'estudiantes_bigdata', 'EST_070', 'personal:edad', '40'
+put 'estudiantes_bigdata', 'EST_070', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_070', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_070', 'academico:nota', '8.1'
+put 'estudiantes_bigdata', 'EST_070', 'contacto:email', 'estudiante70@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_070', 'contacto:telefono', '+34600000070'
+
+# Inserción para estudiante EST_071
+put 'estudiantes_bigdata', 'EST_071', 'personal:nombre', 'Carmen Fernandez'
+put 'estudiantes_bigdata', 'EST_071', 'personal:edad', '41'
+put 'estudiantes_bigdata', 'EST_071', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_071', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_071', 'academico:nota', '8.8'
+put 'estudiantes_bigdata', 'EST_071', 'contacto:email', 'estudiante71@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_071', 'contacto:telefono', '+34600000071'
+
+# Inserción para estudiante EST_072
+put 'estudiantes_bigdata', 'EST_072', 'personal:nombre', 'Javier Sanchez'
+put 'estudiantes_bigdata', 'EST_072', 'personal:edad', '42'
+put 'estudiantes_bigdata', 'EST_072', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_072', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_072', 'academico:nota', '9.5'
+put 'estudiantes_bigdata', 'EST_072', 'contacto:email', 'estudiante72@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_072', 'contacto:telefono', '+34600000072'
+
+# Inserción para estudiante EST_073
+put 'estudiantes_bigdata', 'EST_073', 'personal:nombre', 'Marta Diaz'
+put 'estudiantes_bigdata', 'EST_073', 'personal:edad', '43'
+put 'estudiantes_bigdata', 'EST_073', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_073', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_073', 'academico:nota', '5.1'
+put 'estudiantes_bigdata', 'EST_073', 'contacto:email', 'estudiante73@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_073', 'contacto:telefono', '+34600000073'
+
+# Inserción para estudiante EST_074
+put 'estudiantes_bigdata', 'EST_074', 'personal:nombre', 'Fernando Rodriguez'
+put 'estudiantes_bigdata', 'EST_074', 'personal:edad', '44'
+put 'estudiantes_bigdata', 'EST_074', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_074', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_074', 'academico:nota', '5.8'
+put 'estudiantes_bigdata', 'EST_074', 'contacto:email', 'estudiante74@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_074', 'contacto:telefono', '+34600000074'
+
+# Inserción para estudiante EST_075
+put 'estudiantes_bigdata', 'EST_075', 'personal:nombre', 'Laura Martinez'
+put 'estudiantes_bigdata', 'EST_075', 'personal:edad', '20'
+put 'estudiantes_bigdata', 'EST_075', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_075', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_075', 'academico:nota', '6.5'
+put 'estudiantes_bigdata', 'EST_075', 'contacto:email', 'estudiante75@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_075', 'contacto:telefono', '+34600000075'
+
+# Inserción para estudiante EST_076
+put 'estudiantes_bigdata', 'EST_076', 'personal:nombre', 'Pablo Ruiz'
+put 'estudiantes_bigdata', 'EST_076', 'personal:edad', '21'
+put 'estudiantes_bigdata', 'EST_076', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_076', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_076', 'academico:nota', '7.2'
+put 'estudiantes_bigdata', 'EST_076', 'contacto:email', 'estudiante76@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_076', 'contacto:telefono', '+34600000076'
+
+# Inserción para estudiante EST_077
+put 'estudiantes_bigdata', 'EST_077', 'personal:nombre', 'Beatriz Perez'
+put 'estudiantes_bigdata', 'EST_077', 'personal:edad', '22'
+put 'estudiantes_bigdata', 'EST_077', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_077', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_077', 'academico:nota', '7.9'
+put 'estudiantes_bigdata', 'EST_077', 'contacto:email', 'estudiante77@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_077', 'contacto:telefono', '+34600000077'
+
+# Inserción para estudiante EST_078
+put 'estudiantes_bigdata', 'EST_078', 'personal:nombre', 'Hugo Lopez'
+put 'estudiantes_bigdata', 'EST_078', 'personal:edad', '23'
+put 'estudiantes_bigdata', 'EST_078', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_078', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_078', 'academico:nota', '8.6'
+put 'estudiantes_bigdata', 'EST_078', 'contacto:email', 'estudiante78@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_078', 'contacto:telefono', '+34600000078'
+
+# Inserción para estudiante EST_079
+put 'estudiantes_bigdata', 'EST_079', 'personal:nombre', 'Irene Navarro'
+put 'estudiantes_bigdata', 'EST_079', 'personal:edad', '24'
+put 'estudiantes_bigdata', 'EST_079', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_079', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_079', 'academico:nota', '9.3'
+put 'estudiantes_bigdata', 'EST_079', 'contacto:email', 'estudiante79@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_079', 'contacto:telefono', '+34600000079'
+
+# Inserción para estudiante EST_080
+put 'estudiantes_bigdata', 'EST_080', 'personal:nombre', 'Carlos Gomez'
+put 'estudiantes_bigdata', 'EST_080', 'personal:edad', '25'
+put 'estudiantes_bigdata', 'EST_080', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_080', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_080', 'academico:nota', '10.0'
+put 'estudiantes_bigdata', 'EST_080', 'contacto:email', 'estudiante80@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_080', 'contacto:telefono', '+34600000080'
+
+# Inserción para estudiante EST_081
+put 'estudiantes_bigdata', 'EST_081', 'personal:nombre', 'Ana Fernandez'
+put 'estudiantes_bigdata', 'EST_081', 'personal:edad', '26'
+put 'estudiantes_bigdata', 'EST_081', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_081', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_081', 'academico:nota', '5.6'
+put 'estudiantes_bigdata', 'EST_081', 'contacto:email', 'estudiante81@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_081', 'contacto:telefono', '+34600000081'
+
+# Inserción para estudiante EST_082
+put 'estudiantes_bigdata', 'EST_082', 'personal:nombre', 'Luis Sanchez'
+put 'estudiantes_bigdata', 'EST_082', 'personal:edad', '27'
+put 'estudiantes_bigdata', 'EST_082', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_082', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_082', 'academico:nota', '6.3'
+put 'estudiantes_bigdata', 'EST_082', 'contacto:email', 'estudiante82@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_082', 'contacto:telefono', '+34600000082'
+
+# Inserción para estudiante EST_083
+put 'estudiantes_bigdata', 'EST_083', 'personal:nombre', 'Maria Diaz'
+put 'estudiantes_bigdata', 'EST_083', 'personal:edad', '28'
+put 'estudiantes_bigdata', 'EST_083', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_083', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_083', 'academico:nota', '7.0'
+put 'estudiantes_bigdata', 'EST_083', 'contacto:email', 'estudiante83@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_083', 'contacto:telefono', '+34600000083'
+
+# Inserción para estudiante EST_084
+put 'estudiantes_bigdata', 'EST_084', 'personal:nombre', 'Juan Rodriguez'
+put 'estudiantes_bigdata', 'EST_084', 'personal:edad', '29'
+put 'estudiantes_bigdata', 'EST_084', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_084', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_084', 'academico:nota', '7.7'
+put 'estudiantes_bigdata', 'EST_084', 'contacto:email', 'estudiante84@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_084', 'contacto:telefono', '+34600000084'
+
+# Inserción para estudiante EST_085
+put 'estudiantes_bigdata', 'EST_085', 'personal:nombre', 'Elena Martinez'
+put 'estudiantes_bigdata', 'EST_085', 'personal:edad', '30'
+put 'estudiantes_bigdata', 'EST_085', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_085', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_085', 'academico:nota', '8.4'
+put 'estudiantes_bigdata', 'EST_085', 'contacto:email', 'estudiante85@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_085', 'contacto:telefono', '+34600000085'
+
+# Inserción para estudiante EST_086
+put 'estudiantes_bigdata', 'EST_086', 'personal:nombre', 'Pedro Ruiz'
+put 'estudiantes_bigdata', 'EST_086', 'personal:edad', '31'
+put 'estudiantes_bigdata', 'EST_086', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_086', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_086', 'academico:nota', '9.1'
+put 'estudiantes_bigdata', 'EST_086', 'contacto:email', 'estudiante86@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_086', 'contacto:telefono', '+34600000086'
+
+# Inserción para estudiante EST_087
+put 'estudiantes_bigdata', 'EST_087', 'personal:nombre', 'Sofia Perez'
+put 'estudiantes_bigdata', 'EST_087', 'personal:edad', '32'
+put 'estudiantes_bigdata', 'EST_087', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_087', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_087', 'academico:nota', '9.8'
+put 'estudiantes_bigdata', 'EST_087', 'contacto:email', 'estudiante87@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_087', 'contacto:telefono', '+34600000087'
+
+# Inserción para estudiante EST_088
+put 'estudiantes_bigdata', 'EST_088', 'personal:nombre', 'Diego Lopez'
+put 'estudiantes_bigdata', 'EST_088', 'personal:edad', '33'
+put 'estudiantes_bigdata', 'EST_088', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_088', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_088', 'academico:nota', '5.4'
+put 'estudiantes_bigdata', 'EST_088', 'contacto:email', 'estudiante88@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_088', 'contacto:telefono', '+34600000088'
+
+# Inserción para estudiante EST_089
+put 'estudiantes_bigdata', 'EST_089', 'personal:nombre', 'Lucia Navarro'
+put 'estudiantes_bigdata', 'EST_089', 'personal:edad', '34'
+put 'estudiantes_bigdata', 'EST_089', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_089', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_089', 'academico:nota', '6.1'
+put 'estudiantes_bigdata', 'EST_089', 'contacto:email', 'estudiante89@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_089', 'contacto:telefono', '+34600000089'
+
+# Inserción para estudiante EST_090
+put 'estudiantes_bigdata', 'EST_090', 'personal:nombre', 'Gabriel Gomez'
+put 'estudiantes_bigdata', 'EST_090', 'personal:edad', '35'
+put 'estudiantes_bigdata', 'EST_090', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_090', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_090', 'academico:nota', '6.8'
+put 'estudiantes_bigdata', 'EST_090', 'contacto:email', 'estudiante90@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_090', 'contacto:telefono', '+34600000090'
+
+# Inserción para estudiante EST_091
+put 'estudiantes_bigdata', 'EST_091', 'personal:nombre', 'Carmen Fernandez'
+put 'estudiantes_bigdata', 'EST_091', 'personal:edad', '36'
+put 'estudiantes_bigdata', 'EST_091', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_091', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_091', 'academico:nota', '7.5'
+put 'estudiantes_bigdata', 'EST_091', 'contacto:email', 'estudiante91@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_091', 'contacto:telefono', '+34600000091'
+
+# Inserción para estudiante EST_092
+put 'estudiantes_bigdata', 'EST_092', 'personal:nombre', 'Javier Sanchez'
+put 'estudiantes_bigdata', 'EST_092', 'personal:edad', '37'
+put 'estudiantes_bigdata', 'EST_092', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_092', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_092', 'academico:nota', '8.2'
+put 'estudiantes_bigdata', 'EST_092', 'contacto:email', 'estudiante92@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_092', 'contacto:telefono', '+34600000092'
+
+# Inserción para estudiante EST_093
+put 'estudiantes_bigdata', 'EST_093', 'personal:nombre', 'Marta Diaz'
+put 'estudiantes_bigdata', 'EST_093', 'personal:edad', '38'
+put 'estudiantes_bigdata', 'EST_093', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_093', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_093', 'academico:nota', '8.9'
+put 'estudiantes_bigdata', 'EST_093', 'contacto:email', 'estudiante93@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_093', 'contacto:telefono', '+34600000093'
+
+# Inserción para estudiante EST_094
+put 'estudiantes_bigdata', 'EST_094', 'personal:nombre', 'Fernando Rodriguez'
+put 'estudiantes_bigdata', 'EST_094', 'personal:edad', '39'
+put 'estudiantes_bigdata', 'EST_094', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_094', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_094', 'academico:nota', '9.6'
+put 'estudiantes_bigdata', 'EST_094', 'contacto:email', 'estudiante94@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_094', 'contacto:telefono', '+34600000094'
+
+# Inserción para estudiante EST_095
+put 'estudiantes_bigdata', 'EST_095', 'personal:nombre', 'Laura Martinez'
+put 'estudiantes_bigdata', 'EST_095', 'personal:edad', '40'
+put 'estudiantes_bigdata', 'EST_095', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_095', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_095', 'academico:nota', '5.2'
+put 'estudiantes_bigdata', 'EST_095', 'contacto:email', 'estudiante95@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_095', 'contacto:telefono', '+34600000095'
+
+# Inserción para estudiante EST_096
+put 'estudiantes_bigdata', 'EST_096', 'personal:nombre', 'Pablo Ruiz'
+put 'estudiantes_bigdata', 'EST_096', 'personal:edad', '41'
+put 'estudiantes_bigdata', 'EST_096', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_096', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_096', 'academico:nota', '5.9'
+put 'estudiantes_bigdata', 'EST_096', 'contacto:email', 'estudiante96@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_096', 'contacto:telefono', '+34600000096'
+
+# Inserción para estudiante EST_097
+put 'estudiantes_bigdata', 'EST_097', 'personal:nombre', 'Beatriz Perez'
+put 'estudiantes_bigdata', 'EST_097', 'personal:edad', '42'
+put 'estudiantes_bigdata', 'EST_097', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_097', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_097', 'academico:nota', '6.6'
+put 'estudiantes_bigdata', 'EST_097', 'contacto:email', 'estudiante97@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_097', 'contacto:telefono', '+34600000097'
+
+# Inserción para estudiante EST_098
+put 'estudiantes_bigdata', 'EST_098', 'personal:nombre', 'Hugo Lopez'
+put 'estudiantes_bigdata', 'EST_098', 'personal:edad', '43'
+put 'estudiantes_bigdata', 'EST_098', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_098', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_098', 'academico:nota', '7.3'
+put 'estudiantes_bigdata', 'EST_098', 'contacto:email', 'estudiante98@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_098', 'contacto:telefono', '+34600000098'
+
+# Inserción para estudiante EST_099
+put 'estudiantes_bigdata', 'EST_099', 'personal:nombre', 'Irene Navarro'
+put 'estudiantes_bigdata', 'EST_099', 'personal:edad', '44'
+put 'estudiantes_bigdata', 'EST_099', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_099', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_099', 'academico:nota', '8.0'
+put 'estudiantes_bigdata', 'EST_099', 'contacto:email', 'estudiante99@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_099', 'contacto:telefono', '+34600000099'
+
+# Inserción para estudiante EST_100
+put 'estudiantes_bigdata', 'EST_100', 'personal:nombre', 'Carlos Gomez'
+put 'estudiantes_bigdata', 'EST_100', 'personal:edad', '20'
+put 'estudiantes_bigdata', 'EST_100', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_100', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_100', 'academico:nota', '8.7'
+put 'estudiantes_bigdata', 'EST_100', 'contacto:email', 'estudiante100@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_100', 'contacto:telefono', '+34600000100'
+
+# Inserción para estudiante EST_101
+put 'estudiantes_bigdata', 'EST_101', 'personal:nombre', 'Ana Fernandez'
+put 'estudiantes_bigdata', 'EST_101', 'personal:edad', '21'
+put 'estudiantes_bigdata', 'EST_101', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_101', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_101', 'academico:nota', '9.4'
+put 'estudiantes_bigdata', 'EST_101', 'contacto:email', 'estudiante101@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_101', 'contacto:telefono', '+34600000101'
+
+# Inserción para estudiante EST_102
+put 'estudiantes_bigdata', 'EST_102', 'personal:nombre', 'Luis Sanchez'
+put 'estudiantes_bigdata', 'EST_102', 'personal:edad', '22'
+put 'estudiantes_bigdata', 'EST_102', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_102', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_102', 'academico:nota', '5.0'
+put 'estudiantes_bigdata', 'EST_102', 'contacto:email', 'estudiante102@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_102', 'contacto:telefono', '+34600000102'
+
+# Inserción para estudiante EST_103
+put 'estudiantes_bigdata', 'EST_103', 'personal:nombre', 'Maria Diaz'
+put 'estudiantes_bigdata', 'EST_103', 'personal:edad', '23'
+put 'estudiantes_bigdata', 'EST_103', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_103', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_103', 'academico:nota', '5.7'
+put 'estudiantes_bigdata', 'EST_103', 'contacto:email', 'estudiante103@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_103', 'contacto:telefono', '+34600000103'
+
+# Inserción para estudiante EST_104
+put 'estudiantes_bigdata', 'EST_104', 'personal:nombre', 'Juan Rodriguez'
+put 'estudiantes_bigdata', 'EST_104', 'personal:edad', '24'
+put 'estudiantes_bigdata', 'EST_104', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_104', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_104', 'academico:nota', '6.4'
+put 'estudiantes_bigdata', 'EST_104', 'contacto:email', 'estudiante104@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_104', 'contacto:telefono', '+34600000104'
+
+# Inserción para estudiante EST_105
+put 'estudiantes_bigdata', 'EST_105', 'personal:nombre', 'Elena Martinez'
+put 'estudiantes_bigdata', 'EST_105', 'personal:edad', '25'
+put 'estudiantes_bigdata', 'EST_105', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_105', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_105', 'academico:nota', '7.1'
+put 'estudiantes_bigdata', 'EST_105', 'contacto:email', 'estudiante105@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_105', 'contacto:telefono', '+34600000105'
+
+# Inserción para estudiante EST_106
+put 'estudiantes_bigdata', 'EST_106', 'personal:nombre', 'Pedro Ruiz'
+put 'estudiantes_bigdata', 'EST_106', 'personal:edad', '26'
+put 'estudiantes_bigdata', 'EST_106', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_106', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_106', 'academico:nota', '7.8'
+put 'estudiantes_bigdata', 'EST_106', 'contacto:email', 'estudiante106@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_106', 'contacto:telefono', '+34600000106'
+
+# Inserción para estudiante EST_107
+put 'estudiantes_bigdata', 'EST_107', 'personal:nombre', 'Sofia Perez'
+put 'estudiantes_bigdata', 'EST_107', 'personal:edad', '27'
+put 'estudiantes_bigdata', 'EST_107', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_107', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_107', 'academico:nota', '8.5'
+put 'estudiantes_bigdata', 'EST_107', 'contacto:email', 'estudiante107@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_107', 'contacto:telefono', '+34600000107'
+
+# Inserción para estudiante EST_108
+put 'estudiantes_bigdata', 'EST_108', 'personal:nombre', 'Diego Lopez'
+put 'estudiantes_bigdata', 'EST_108', 'personal:edad', '28'
+put 'estudiantes_bigdata', 'EST_108', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_108', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_108', 'academico:nota', '9.2'
+put 'estudiantes_bigdata', 'EST_108', 'contacto:email', 'estudiante108@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_108', 'contacto:telefono', '+34600000108'
+
+# Inserción para estudiante EST_109
+put 'estudiantes_bigdata', 'EST_109', 'personal:nombre', 'Lucia Navarro'
+put 'estudiantes_bigdata', 'EST_109', 'personal:edad', '29'
+put 'estudiantes_bigdata', 'EST_109', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_109', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_109', 'academico:nota', '9.9'
+put 'estudiantes_bigdata', 'EST_109', 'contacto:email', 'estudiante109@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_109', 'contacto:telefono', '+34600000109'
+
+# Inserción para estudiante EST_110
+put 'estudiantes_bigdata', 'EST_110', 'personal:nombre', 'Gabriel Gomez'
+put 'estudiantes_bigdata', 'EST_110', 'personal:edad', '30'
+put 'estudiantes_bigdata', 'EST_110', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_110', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_110', 'academico:nota', '5.5'
+put 'estudiantes_bigdata', 'EST_110', 'contacto:email', 'estudiante110@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_110', 'contacto:telefono', '+34600000110'
+
+# Inserción para estudiante EST_111
+put 'estudiantes_bigdata', 'EST_111', 'personal:nombre', 'Carmen Fernandez'
+put 'estudiantes_bigdata', 'EST_111', 'personal:edad', '31'
+put 'estudiantes_bigdata', 'EST_111', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_111', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_111', 'academico:nota', '6.2'
+put 'estudiantes_bigdata', 'EST_111', 'contacto:email', 'estudiante111@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_111', 'contacto:telefono', '+34600000111'
+
+# Inserción para estudiante EST_112
+put 'estudiantes_bigdata', 'EST_112', 'personal:nombre', 'Javier Sanchez'
+put 'estudiantes_bigdata', 'EST_112', 'personal:edad', '32'
+put 'estudiantes_bigdata', 'EST_112', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_112', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_112', 'academico:nota', '6.9'
+put 'estudiantes_bigdata', 'EST_112', 'contacto:email', 'estudiante112@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_112', 'contacto:telefono', '+34600000112'
+
+# Inserción para estudiante EST_113
+put 'estudiantes_bigdata', 'EST_113', 'personal:nombre', 'Marta Diaz'
+put 'estudiantes_bigdata', 'EST_113', 'personal:edad', '33'
+put 'estudiantes_bigdata', 'EST_113', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_113', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_113', 'academico:nota', '7.6'
+put 'estudiantes_bigdata', 'EST_113', 'contacto:email', 'estudiante113@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_113', 'contacto:telefono', '+34600000113'
+
+# Inserción para estudiante EST_114
+put 'estudiantes_bigdata', 'EST_114', 'personal:nombre', 'Fernando Rodriguez'
+put 'estudiantes_bigdata', 'EST_114', 'personal:edad', '34'
+put 'estudiantes_bigdata', 'EST_114', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_114', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_114', 'academico:nota', '8.3'
+put 'estudiantes_bigdata', 'EST_114', 'contacto:email', 'estudiante114@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_114', 'contacto:telefono', '+34600000114'
+
+# Inserción para estudiante EST_115
+put 'estudiantes_bigdata', 'EST_115', 'personal:nombre', 'Laura Martinez'
+put 'estudiantes_bigdata', 'EST_115', 'personal:edad', '35'
+put 'estudiantes_bigdata', 'EST_115', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_115', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_115', 'academico:nota', '9.0'
+put 'estudiantes_bigdata', 'EST_115', 'contacto:email', 'estudiante115@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_115', 'contacto:telefono', '+34600000115'
+
+# Inserción para estudiante EST_116
+put 'estudiantes_bigdata', 'EST_116', 'personal:nombre', 'Pablo Ruiz'
+put 'estudiantes_bigdata', 'EST_116', 'personal:edad', '36'
+put 'estudiantes_bigdata', 'EST_116', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_116', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_116', 'academico:nota', '9.7'
+put 'estudiantes_bigdata', 'EST_116', 'contacto:email', 'estudiante116@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_116', 'contacto:telefono', '+34600000116'
+
+# Inserción para estudiante EST_117
+put 'estudiantes_bigdata', 'EST_117', 'personal:nombre', 'Beatriz Perez'
+put 'estudiantes_bigdata', 'EST_117', 'personal:edad', '37'
+put 'estudiantes_bigdata', 'EST_117', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_117', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_117', 'academico:nota', '5.3'
+put 'estudiantes_bigdata', 'EST_117', 'contacto:email', 'estudiante117@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_117', 'contacto:telefono', '+34600000117'
+
+# Inserción para estudiante EST_118
+put 'estudiantes_bigdata', 'EST_118', 'personal:nombre', 'Hugo Lopez'
+put 'estudiantes_bigdata', 'EST_118', 'personal:edad', '38'
+put 'estudiantes_bigdata', 'EST_118', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_118', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_118', 'academico:nota', '6.0'
+put 'estudiantes_bigdata', 'EST_118', 'contacto:email', 'estudiante118@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_118', 'contacto:telefono', '+34600000118'
+
+# Inserción para estudiante EST_119
+put 'estudiantes_bigdata', 'EST_119', 'personal:nombre', 'Irene Navarro'
+put 'estudiantes_bigdata', 'EST_119', 'personal:edad', '39'
+put 'estudiantes_bigdata', 'EST_119', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_119', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_119', 'academico:nota', '6.7'
+put 'estudiantes_bigdata', 'EST_119', 'contacto:email', 'estudiante119@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_119', 'contacto:telefono', '+34600000119'
+
+# Inserción para estudiante EST_120
+put 'estudiantes_bigdata', 'EST_120', 'personal:nombre', 'Carlos Gomez'
+put 'estudiantes_bigdata', 'EST_120', 'personal:edad', '40'
+put 'estudiantes_bigdata', 'EST_120', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_120', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_120', 'academico:nota', '7.4'
+put 'estudiantes_bigdata', 'EST_120', 'contacto:email', 'estudiante120@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_120', 'contacto:telefono', '+34600000120'
+
+# Inserción para estudiante EST_121
+put 'estudiantes_bigdata', 'EST_121', 'personal:nombre', 'Ana Fernandez'
+put 'estudiantes_bigdata', 'EST_121', 'personal:edad', '41'
+put 'estudiantes_bigdata', 'EST_121', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_121', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_121', 'academico:nota', '8.1'
+put 'estudiantes_bigdata', 'EST_121', 'contacto:email', 'estudiante121@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_121', 'contacto:telefono', '+34600000121'
+
+# Inserción para estudiante EST_122
+put 'estudiantes_bigdata', 'EST_122', 'personal:nombre', 'Luis Sanchez'
+put 'estudiantes_bigdata', 'EST_122', 'personal:edad', '42'
+put 'estudiantes_bigdata', 'EST_122', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_122', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_122', 'academico:nota', '8.8'
+put 'estudiantes_bigdata', 'EST_122', 'contacto:email', 'estudiante122@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_122', 'contacto:telefono', '+34600000122'
+
+# Inserción para estudiante EST_123
+put 'estudiantes_bigdata', 'EST_123', 'personal:nombre', 'Maria Diaz'
+put 'estudiantes_bigdata', 'EST_123', 'personal:edad', '43'
+put 'estudiantes_bigdata', 'EST_123', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_123', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_123', 'academico:nota', '9.5'
+put 'estudiantes_bigdata', 'EST_123', 'contacto:email', 'estudiante123@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_123', 'contacto:telefono', '+34600000123'
+
+# Inserción para estudiante EST_124
+put 'estudiantes_bigdata', 'EST_124', 'personal:nombre', 'Juan Rodriguez'
+put 'estudiantes_bigdata', 'EST_124', 'personal:edad', '44'
+put 'estudiantes_bigdata', 'EST_124', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_124', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_124', 'academico:nota', '5.1'
+put 'estudiantes_bigdata', 'EST_124', 'contacto:email', 'estudiante124@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_124', 'contacto:telefono', '+34600000124'
+
+# Inserción para estudiante EST_125
+put 'estudiantes_bigdata', 'EST_125', 'personal:nombre', 'Elena Martinez'
+put 'estudiantes_bigdata', 'EST_125', 'personal:edad', '20'
+put 'estudiantes_bigdata', 'EST_125', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_125', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_125', 'academico:nota', '5.8'
+put 'estudiantes_bigdata', 'EST_125', 'contacto:email', 'estudiante125@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_125', 'contacto:telefono', '+34600000125'
+
+# Inserción para estudiante EST_126
+put 'estudiantes_bigdata', 'EST_126', 'personal:nombre', 'Pedro Ruiz'
+put 'estudiantes_bigdata', 'EST_126', 'personal:edad', '21'
+put 'estudiantes_bigdata', 'EST_126', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_126', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_126', 'academico:nota', '6.5'
+put 'estudiantes_bigdata', 'EST_126', 'contacto:email', 'estudiante126@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_126', 'contacto:telefono', '+34600000126'
+
+# Inserción para estudiante EST_127
+put 'estudiantes_bigdata', 'EST_127', 'personal:nombre', 'Sofia Perez'
+put 'estudiantes_bigdata', 'EST_127', 'personal:edad', '22'
+put 'estudiantes_bigdata', 'EST_127', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_127', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_127', 'academico:nota', '7.2'
+put 'estudiantes_bigdata', 'EST_127', 'contacto:email', 'estudiante127@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_127', 'contacto:telefono', '+34600000127'
+
+# Inserción para estudiante EST_128
+put 'estudiantes_bigdata', 'EST_128', 'personal:nombre', 'Diego Lopez'
+put 'estudiantes_bigdata', 'EST_128', 'personal:edad', '23'
+put 'estudiantes_bigdata', 'EST_128', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_128', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_128', 'academico:nota', '7.9'
+put 'estudiantes_bigdata', 'EST_128', 'contacto:email', 'estudiante128@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_128', 'contacto:telefono', '+34600000128'
+
+# Inserción para estudiante EST_129
+put 'estudiantes_bigdata', 'EST_129', 'personal:nombre', 'Lucia Navarro'
+put 'estudiantes_bigdata', 'EST_129', 'personal:edad', '24'
+put 'estudiantes_bigdata', 'EST_129', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_129', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_129', 'academico:nota', '8.6'
+put 'estudiantes_bigdata', 'EST_129', 'contacto:email', 'estudiante129@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_129', 'contacto:telefono', '+34600000129'
+
+# Inserción para estudiante EST_130
+put 'estudiantes_bigdata', 'EST_130', 'personal:nombre', 'Gabriel Gomez'
+put 'estudiantes_bigdata', 'EST_130', 'personal:edad', '25'
+put 'estudiantes_bigdata', 'EST_130', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_130', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_130', 'academico:nota', '9.3'
+put 'estudiantes_bigdata', 'EST_130', 'contacto:email', 'estudiante130@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_130', 'contacto:telefono', '+34600000130'
+
+# Inserción para estudiante EST_131
+put 'estudiantes_bigdata', 'EST_131', 'personal:nombre', 'Carmen Fernandez'
+put 'estudiantes_bigdata', 'EST_131', 'personal:edad', '26'
+put 'estudiantes_bigdata', 'EST_131', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_131', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_131', 'academico:nota', '10.0'
+put 'estudiantes_bigdata', 'EST_131', 'contacto:email', 'estudiante131@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_131', 'contacto:telefono', '+34600000131'
+
+# Inserción para estudiante EST_132
+put 'estudiantes_bigdata', 'EST_132', 'personal:nombre', 'Javier Sanchez'
+put 'estudiantes_bigdata', 'EST_132', 'personal:edad', '27'
+put 'estudiantes_bigdata', 'EST_132', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_132', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_132', 'academico:nota', '5.6'
+put 'estudiantes_bigdata', 'EST_132', 'contacto:email', 'estudiante132@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_132', 'contacto:telefono', '+34600000132'
+
+# Inserción para estudiante EST_133
+put 'estudiantes_bigdata', 'EST_133', 'personal:nombre', 'Marta Diaz'
+put 'estudiantes_bigdata', 'EST_133', 'personal:edad', '28'
+put 'estudiantes_bigdata', 'EST_133', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_133', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_133', 'academico:nota', '6.3'
+put 'estudiantes_bigdata', 'EST_133', 'contacto:email', 'estudiante133@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_133', 'contacto:telefono', '+34600000133'
+
+# Inserción para estudiante EST_134
+put 'estudiantes_bigdata', 'EST_134', 'personal:nombre', 'Fernando Rodriguez'
+put 'estudiantes_bigdata', 'EST_134', 'personal:edad', '29'
+put 'estudiantes_bigdata', 'EST_134', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_134', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_134', 'academico:nota', '7.0'
+put 'estudiantes_bigdata', 'EST_134', 'contacto:email', 'estudiante134@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_134', 'contacto:telefono', '+34600000134'
+
+# Inserción para estudiante EST_135
+put 'estudiantes_bigdata', 'EST_135', 'personal:nombre', 'Laura Martinez'
+put 'estudiantes_bigdata', 'EST_135', 'personal:edad', '30'
+put 'estudiantes_bigdata', 'EST_135', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_135', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_135', 'academico:nota', '7.7'
+put 'estudiantes_bigdata', 'EST_135', 'contacto:email', 'estudiante135@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_135', 'contacto:telefono', '+34600000135'
+
+# Inserción para estudiante EST_136
+put 'estudiantes_bigdata', 'EST_136', 'personal:nombre', 'Pablo Ruiz'
+put 'estudiantes_bigdata', 'EST_136', 'personal:edad', '31'
+put 'estudiantes_bigdata', 'EST_136', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_136', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_136', 'academico:nota', '8.4'
+put 'estudiantes_bigdata', 'EST_136', 'contacto:email', 'estudiante136@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_136', 'contacto:telefono', '+34600000136'
+
+# Inserción para estudiante EST_137
+put 'estudiantes_bigdata', 'EST_137', 'personal:nombre', 'Beatriz Perez'
+put 'estudiantes_bigdata', 'EST_137', 'personal:edad', '32'
+put 'estudiantes_bigdata', 'EST_137', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_137', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_137', 'academico:nota', '9.1'
+put 'estudiantes_bigdata', 'EST_137', 'contacto:email', 'estudiante137@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_137', 'contacto:telefono', '+34600000137'
+
+# Inserción para estudiante EST_138
+put 'estudiantes_bigdata', 'EST_138', 'personal:nombre', 'Hugo Lopez'
+put 'estudiantes_bigdata', 'EST_138', 'personal:edad', '33'
+put 'estudiantes_bigdata', 'EST_138', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_138', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_138', 'academico:nota', '9.8'
+put 'estudiantes_bigdata', 'EST_138', 'contacto:email', 'estudiante138@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_138', 'contacto:telefono', '+34600000138'
+
+# Inserción para estudiante EST_139
+put 'estudiantes_bigdata', 'EST_139', 'personal:nombre', 'Irene Navarro'
+put 'estudiantes_bigdata', 'EST_139', 'personal:edad', '34'
+put 'estudiantes_bigdata', 'EST_139', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_139', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_139', 'academico:nota', '5.4'
+put 'estudiantes_bigdata', 'EST_139', 'contacto:email', 'estudiante139@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_139', 'contacto:telefono', '+34600000139'
+
+# Inserción para estudiante EST_140
+put 'estudiantes_bigdata', 'EST_140', 'personal:nombre', 'Carlos Gomez'
+put 'estudiantes_bigdata', 'EST_140', 'personal:edad', '35'
+put 'estudiantes_bigdata', 'EST_140', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_140', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_140', 'academico:nota', '6.1'
+put 'estudiantes_bigdata', 'EST_140', 'contacto:email', 'estudiante140@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_140', 'contacto:telefono', '+34600000140'
+
+# Inserción para estudiante EST_141
+put 'estudiantes_bigdata', 'EST_141', 'personal:nombre', 'Ana Fernandez'
+put 'estudiantes_bigdata', 'EST_141', 'personal:edad', '36'
+put 'estudiantes_bigdata', 'EST_141', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_141', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_141', 'academico:nota', '6.8'
+put 'estudiantes_bigdata', 'EST_141', 'contacto:email', 'estudiante141@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_141', 'contacto:telefono', '+34600000141'
+
+# Inserción para estudiante EST_142
+put 'estudiantes_bigdata', 'EST_142', 'personal:nombre', 'Luis Sanchez'
+put 'estudiantes_bigdata', 'EST_142', 'personal:edad', '37'
+put 'estudiantes_bigdata', 'EST_142', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_142', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_142', 'academico:nota', '7.5'
+put 'estudiantes_bigdata', 'EST_142', 'contacto:email', 'estudiante142@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_142', 'contacto:telefono', '+34600000142'
+
+# Inserción para estudiante EST_143
+put 'estudiantes_bigdata', 'EST_143', 'personal:nombre', 'Maria Diaz'
+put 'estudiantes_bigdata', 'EST_143', 'personal:edad', '38'
+put 'estudiantes_bigdata', 'EST_143', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_143', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_143', 'academico:nota', '8.2'
+put 'estudiantes_bigdata', 'EST_143', 'contacto:email', 'estudiante143@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_143', 'contacto:telefono', '+34600000143'
+
+# Inserción para estudiante EST_144
+put 'estudiantes_bigdata', 'EST_144', 'personal:nombre', 'Juan Rodriguez'
+put 'estudiantes_bigdata', 'EST_144', 'personal:edad', '39'
+put 'estudiantes_bigdata', 'EST_144', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_144', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_144', 'academico:nota', '8.9'
+put 'estudiantes_bigdata', 'EST_144', 'contacto:email', 'estudiante144@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_144', 'contacto:telefono', '+34600000144'
+
+# Inserción para estudiante EST_145
+put 'estudiantes_bigdata', 'EST_145', 'personal:nombre', 'Elena Martinez'
+put 'estudiantes_bigdata', 'EST_145', 'personal:edad', '40'
+put 'estudiantes_bigdata', 'EST_145', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_145', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_145', 'academico:nota', '9.6'
+put 'estudiantes_bigdata', 'EST_145', 'contacto:email', 'estudiante145@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_145', 'contacto:telefono', '+34600000145'
+
+# Inserción para estudiante EST_146
+put 'estudiantes_bigdata', 'EST_146', 'personal:nombre', 'Pedro Ruiz'
+put 'estudiantes_bigdata', 'EST_146', 'personal:edad', '41'
+put 'estudiantes_bigdata', 'EST_146', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_146', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_146', 'academico:nota', '5.2'
+put 'estudiantes_bigdata', 'EST_146', 'contacto:email', 'estudiante146@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_146', 'contacto:telefono', '+34600000146'
+
+# Inserción para estudiante EST_147
+put 'estudiantes_bigdata', 'EST_147', 'personal:nombre', 'Sofia Perez'
+put 'estudiantes_bigdata', 'EST_147', 'personal:edad', '42'
+put 'estudiantes_bigdata', 'EST_147', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_147', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_147', 'academico:nota', '5.9'
+put 'estudiantes_bigdata', 'EST_147', 'contacto:email', 'estudiante147@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_147', 'contacto:telefono', '+34600000147'
+
+# Inserción para estudiante EST_148
+put 'estudiantes_bigdata', 'EST_148', 'personal:nombre', 'Diego Lopez'
+put 'estudiantes_bigdata', 'EST_148', 'personal:edad', '43'
+put 'estudiantes_bigdata', 'EST_148', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_148', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_148', 'academico:nota', '6.6'
+put 'estudiantes_bigdata', 'EST_148', 'contacto:email', 'estudiante148@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_148', 'contacto:telefono', '+34600000148'
+
+# Inserción para estudiante EST_149
+put 'estudiantes_bigdata', 'EST_149', 'personal:nombre', 'Lucia Navarro'
+put 'estudiantes_bigdata', 'EST_149', 'personal:edad', '44'
+put 'estudiantes_bigdata', 'EST_149', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_149', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_149', 'academico:nota', '7.3'
+put 'estudiantes_bigdata', 'EST_149', 'contacto:email', 'estudiante149@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_149', 'contacto:telefono', '+34600000149'
+
+# Inserción para estudiante EST_150
+put 'estudiantes_bigdata', 'EST_150', 'personal:nombre', 'Gabriel Gomez'
+put 'estudiantes_bigdata', 'EST_150', 'personal:edad', '20'
+put 'estudiantes_bigdata', 'EST_150', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_150', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_150', 'academico:nota', '8.0'
+put 'estudiantes_bigdata', 'EST_150', 'contacto:email', 'estudiante150@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_150', 'contacto:telefono', '+34600000150'
+
+# Inserción para estudiante EST_151
+put 'estudiantes_bigdata', 'EST_151', 'personal:nombre', 'Carmen Fernandez'
+put 'estudiantes_bigdata', 'EST_151', 'personal:edad', '21'
+put 'estudiantes_bigdata', 'EST_151', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_151', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_151', 'academico:nota', '8.7'
+put 'estudiantes_bigdata', 'EST_151', 'contacto:email', 'estudiante151@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_151', 'contacto:telefono', '+34600000151'
+
+# Inserción para estudiante EST_152
+put 'estudiantes_bigdata', 'EST_152', 'personal:nombre', 'Javier Sanchez'
+put 'estudiantes_bigdata', 'EST_152', 'personal:edad', '22'
+put 'estudiantes_bigdata', 'EST_152', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_152', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_152', 'academico:nota', '9.4'
+put 'estudiantes_bigdata', 'EST_152', 'contacto:email', 'estudiante152@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_152', 'contacto:telefono', '+34600000152'
+
+# Inserción para estudiante EST_153
+put 'estudiantes_bigdata', 'EST_153', 'personal:nombre', 'Marta Diaz'
+put 'estudiantes_bigdata', 'EST_153', 'personal:edad', '23'
+put 'estudiantes_bigdata', 'EST_153', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_153', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_153', 'academico:nota', '5.0'
+put 'estudiantes_bigdata', 'EST_153', 'contacto:email', 'estudiante153@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_153', 'contacto:telefono', '+34600000153'
+
+# Inserción para estudiante EST_154
+put 'estudiantes_bigdata', 'EST_154', 'personal:nombre', 'Fernando Rodriguez'
+put 'estudiantes_bigdata', 'EST_154', 'personal:edad', '24'
+put 'estudiantes_bigdata', 'EST_154', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_154', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_154', 'academico:nota', '5.7'
+put 'estudiantes_bigdata', 'EST_154', 'contacto:email', 'estudiante154@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_154', 'contacto:telefono', '+34600000154'
+
+# Inserción para estudiante EST_155
+put 'estudiantes_bigdata', 'EST_155', 'personal:nombre', 'Laura Martinez'
+put 'estudiantes_bigdata', 'EST_155', 'personal:edad', '25'
+put 'estudiantes_bigdata', 'EST_155', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_155', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_155', 'academico:nota', '6.4'
+put 'estudiantes_bigdata', 'EST_155', 'contacto:email', 'estudiante155@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_155', 'contacto:telefono', '+34600000155'
+
+# Inserción para estudiante EST_156
+put 'estudiantes_bigdata', 'EST_156', 'personal:nombre', 'Pablo Ruiz'
+put 'estudiantes_bigdata', 'EST_156', 'personal:edad', '26'
+put 'estudiantes_bigdata', 'EST_156', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_156', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_156', 'academico:nota', '7.1'
+put 'estudiantes_bigdata', 'EST_156', 'contacto:email', 'estudiante156@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_156', 'contacto:telefono', '+34600000156'
+
+# Inserción para estudiante EST_157
+put 'estudiantes_bigdata', 'EST_157', 'personal:nombre', 'Beatriz Perez'
+put 'estudiantes_bigdata', 'EST_157', 'personal:edad', '27'
+put 'estudiantes_bigdata', 'EST_157', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_157', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_157', 'academico:nota', '7.8'
+put 'estudiantes_bigdata', 'EST_157', 'contacto:email', 'estudiante157@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_157', 'contacto:telefono', '+34600000157'
+
+# Inserción para estudiante EST_158
+put 'estudiantes_bigdata', 'EST_158', 'personal:nombre', 'Hugo Lopez'
+put 'estudiantes_bigdata', 'EST_158', 'personal:edad', '28'
+put 'estudiantes_bigdata', 'EST_158', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_158', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_158', 'academico:nota', '8.5'
+put 'estudiantes_bigdata', 'EST_158', 'contacto:email', 'estudiante158@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_158', 'contacto:telefono', '+34600000158'
+
+# Inserción para estudiante EST_159
+put 'estudiantes_bigdata', 'EST_159', 'personal:nombre', 'Irene Navarro'
+put 'estudiantes_bigdata', 'EST_159', 'personal:edad', '29'
+put 'estudiantes_bigdata', 'EST_159', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_159', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_159', 'academico:nota', '9.2'
+put 'estudiantes_bigdata', 'EST_159', 'contacto:email', 'estudiante159@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_159', 'contacto:telefono', '+34600000159'
+
+# Inserción para estudiante EST_160
+put 'estudiantes_bigdata', 'EST_160', 'personal:nombre', 'Carlos Gomez'
+put 'estudiantes_bigdata', 'EST_160', 'personal:edad', '30'
+put 'estudiantes_bigdata', 'EST_160', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_160', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_160', 'academico:nota', '9.9'
+put 'estudiantes_bigdata', 'EST_160', 'contacto:email', 'estudiante160@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_160', 'contacto:telefono', '+34600000160'
+
+# Inserción para estudiante EST_161
+put 'estudiantes_bigdata', 'EST_161', 'personal:nombre', 'Ana Fernandez'
+put 'estudiantes_bigdata', 'EST_161', 'personal:edad', '31'
+put 'estudiantes_bigdata', 'EST_161', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_161', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_161', 'academico:nota', '5.5'
+put 'estudiantes_bigdata', 'EST_161', 'contacto:email', 'estudiante161@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_161', 'contacto:telefono', '+34600000161'
+
+# Inserción para estudiante EST_162
+put 'estudiantes_bigdata', 'EST_162', 'personal:nombre', 'Luis Sanchez'
+put 'estudiantes_bigdata', 'EST_162', 'personal:edad', '32'
+put 'estudiantes_bigdata', 'EST_162', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_162', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_162', 'academico:nota', '6.2'
+put 'estudiantes_bigdata', 'EST_162', 'contacto:email', 'estudiante162@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_162', 'contacto:telefono', '+34600000162'
+
+# Inserción para estudiante EST_163
+put 'estudiantes_bigdata', 'EST_163', 'personal:nombre', 'Maria Diaz'
+put 'estudiantes_bigdata', 'EST_163', 'personal:edad', '33'
+put 'estudiantes_bigdata', 'EST_163', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_163', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_163', 'academico:nota', '6.9'
+put 'estudiantes_bigdata', 'EST_163', 'contacto:email', 'estudiante163@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_163', 'contacto:telefono', '+34600000163'
+
+# Inserción para estudiante EST_164
+put 'estudiantes_bigdata', 'EST_164', 'personal:nombre', 'Juan Rodriguez'
+put 'estudiantes_bigdata', 'EST_164', 'personal:edad', '34'
+put 'estudiantes_bigdata', 'EST_164', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_164', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_164', 'academico:nota', '7.6'
+put 'estudiantes_bigdata', 'EST_164', 'contacto:email', 'estudiante164@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_164', 'contacto:telefono', '+34600000164'
+
+# Inserción para estudiante EST_165
+put 'estudiantes_bigdata', 'EST_165', 'personal:nombre', 'Elena Martinez'
+put 'estudiantes_bigdata', 'EST_165', 'personal:edad', '35'
+put 'estudiantes_bigdata', 'EST_165', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_165', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_165', 'academico:nota', '8.3'
+put 'estudiantes_bigdata', 'EST_165', 'contacto:email', 'estudiante165@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_165', 'contacto:telefono', '+34600000165'
+
+# Inserción para estudiante EST_166
+put 'estudiantes_bigdata', 'EST_166', 'personal:nombre', 'Pedro Ruiz'
+put 'estudiantes_bigdata', 'EST_166', 'personal:edad', '36'
+put 'estudiantes_bigdata', 'EST_166', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_166', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_166', 'academico:nota', '9.0'
+put 'estudiantes_bigdata', 'EST_166', 'contacto:email', 'estudiante166@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_166', 'contacto:telefono', '+34600000166'
+
+# Inserción para estudiante EST_167
+put 'estudiantes_bigdata', 'EST_167', 'personal:nombre', 'Sofia Perez'
+put 'estudiantes_bigdata', 'EST_167', 'personal:edad', '37'
+put 'estudiantes_bigdata', 'EST_167', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_167', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_167', 'academico:nota', '9.7'
+put 'estudiantes_bigdata', 'EST_167', 'contacto:email', 'estudiante167@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_167', 'contacto:telefono', '+34600000167'
+
+# Inserción para estudiante EST_168
+put 'estudiantes_bigdata', 'EST_168', 'personal:nombre', 'Diego Lopez'
+put 'estudiantes_bigdata', 'EST_168', 'personal:edad', '38'
+put 'estudiantes_bigdata', 'EST_168', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_168', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_168', 'academico:nota', '5.3'
+put 'estudiantes_bigdata', 'EST_168', 'contacto:email', 'estudiante168@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_168', 'contacto:telefono', '+34600000168'
+
+# Inserción para estudiante EST_169
+put 'estudiantes_bigdata', 'EST_169', 'personal:nombre', 'Lucia Navarro'
+put 'estudiantes_bigdata', 'EST_169', 'personal:edad', '39'
+put 'estudiantes_bigdata', 'EST_169', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_169', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_169', 'academico:nota', '6.0'
+put 'estudiantes_bigdata', 'EST_169', 'contacto:email', 'estudiante169@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_169', 'contacto:telefono', '+34600000169'
+
+# Inserción para estudiante EST_170
+put 'estudiantes_bigdata', 'EST_170', 'personal:nombre', 'Gabriel Gomez'
+put 'estudiantes_bigdata', 'EST_170', 'personal:edad', '40'
+put 'estudiantes_bigdata', 'EST_170', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_170', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_170', 'academico:nota', '6.7'
+put 'estudiantes_bigdata', 'EST_170', 'contacto:email', 'estudiante170@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_170', 'contacto:telefono', '+34600000170'
+
+# Inserción para estudiante EST_171
+put 'estudiantes_bigdata', 'EST_171', 'personal:nombre', 'Carmen Fernandez'
+put 'estudiantes_bigdata', 'EST_171', 'personal:edad', '41'
+put 'estudiantes_bigdata', 'EST_171', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_171', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_171', 'academico:nota', '7.4'
+put 'estudiantes_bigdata', 'EST_171', 'contacto:email', 'estudiante171@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_171', 'contacto:telefono', '+34600000171'
+
+# Inserción para estudiante EST_172
+put 'estudiantes_bigdata', 'EST_172', 'personal:nombre', 'Javier Sanchez'
+put 'estudiantes_bigdata', 'EST_172', 'personal:edad', '42'
+put 'estudiantes_bigdata', 'EST_172', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_172', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_172', 'academico:nota', '8.1'
+put 'estudiantes_bigdata', 'EST_172', 'contacto:email', 'estudiante172@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_172', 'contacto:telefono', '+34600000172'
+
+# Inserción para estudiante EST_173
+put 'estudiantes_bigdata', 'EST_173', 'personal:nombre', 'Marta Diaz'
+put 'estudiantes_bigdata', 'EST_173', 'personal:edad', '43'
+put 'estudiantes_bigdata', 'EST_173', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_173', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_173', 'academico:nota', '8.8'
+put 'estudiantes_bigdata', 'EST_173', 'contacto:email', 'estudiante173@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_173', 'contacto:telefono', '+34600000173'
+
+# Inserción para estudiante EST_174
+put 'estudiantes_bigdata', 'EST_174', 'personal:nombre', 'Fernando Rodriguez'
+put 'estudiantes_bigdata', 'EST_174', 'personal:edad', '44'
+put 'estudiantes_bigdata', 'EST_174', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_174', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_174', 'academico:nota', '9.5'
+put 'estudiantes_bigdata', 'EST_174', 'contacto:email', 'estudiante174@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_174', 'contacto:telefono', '+34600000174'
+
+# Inserción para estudiante EST_175
+put 'estudiantes_bigdata', 'EST_175', 'personal:nombre', 'Laura Martinez'
+put 'estudiantes_bigdata', 'EST_175', 'personal:edad', '20'
+put 'estudiantes_bigdata', 'EST_175', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_175', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_175', 'academico:nota', '5.1'
+put 'estudiantes_bigdata', 'EST_175', 'contacto:email', 'estudiante175@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_175', 'contacto:telefono', '+34600000175'
+
+# Inserción para estudiante EST_176
+put 'estudiantes_bigdata', 'EST_176', 'personal:nombre', 'Pablo Ruiz'
+put 'estudiantes_bigdata', 'EST_176', 'personal:edad', '21'
+put 'estudiantes_bigdata', 'EST_176', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_176', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_176', 'academico:nota', '5.8'
+put 'estudiantes_bigdata', 'EST_176', 'contacto:email', 'estudiante176@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_176', 'contacto:telefono', '+34600000176'
+
+# Inserción para estudiante EST_177
+put 'estudiantes_bigdata', 'EST_177', 'personal:nombre', 'Beatriz Perez'
+put 'estudiantes_bigdata', 'EST_177', 'personal:edad', '22'
+put 'estudiantes_bigdata', 'EST_177', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_177', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_177', 'academico:nota', '6.5'
+put 'estudiantes_bigdata', 'EST_177', 'contacto:email', 'estudiante177@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_177', 'contacto:telefono', '+34600000177'
+
+# Inserción para estudiante EST_178
+put 'estudiantes_bigdata', 'EST_178', 'personal:nombre', 'Hugo Lopez'
+put 'estudiantes_bigdata', 'EST_178', 'personal:edad', '23'
+put 'estudiantes_bigdata', 'EST_178', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_178', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_178', 'academico:nota', '7.2'
+put 'estudiantes_bigdata', 'EST_178', 'contacto:email', 'estudiante178@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_178', 'contacto:telefono', '+34600000178'
+
+# Inserción para estudiante EST_179
+put 'estudiantes_bigdata', 'EST_179', 'personal:nombre', 'Irene Navarro'
+put 'estudiantes_bigdata', 'EST_179', 'personal:edad', '24'
+put 'estudiantes_bigdata', 'EST_179', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_179', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_179', 'academico:nota', '7.9'
+put 'estudiantes_bigdata', 'EST_179', 'contacto:email', 'estudiante179@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_179', 'contacto:telefono', '+34600000179'
+
+# Inserción para estudiante EST_180
+put 'estudiantes_bigdata', 'EST_180', 'personal:nombre', 'Carlos Gomez'
+put 'estudiantes_bigdata', 'EST_180', 'personal:edad', '25'
+put 'estudiantes_bigdata', 'EST_180', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_180', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_180', 'academico:nota', '8.6'
+put 'estudiantes_bigdata', 'EST_180', 'contacto:email', 'estudiante180@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_180', 'contacto:telefono', '+34600000180'
+
+# Inserción para estudiante EST_181
+put 'estudiantes_bigdata', 'EST_181', 'personal:nombre', 'Ana Fernandez'
+put 'estudiantes_bigdata', 'EST_181', 'personal:edad', '26'
+put 'estudiantes_bigdata', 'EST_181', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_181', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_181', 'academico:nota', '9.3'
+put 'estudiantes_bigdata', 'EST_181', 'contacto:email', 'estudiante181@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_181', 'contacto:telefono', '+34600000181'
+
+# Inserción para estudiante EST_182
+put 'estudiantes_bigdata', 'EST_182', 'personal:nombre', 'Luis Sanchez'
+put 'estudiantes_bigdata', 'EST_182', 'personal:edad', '27'
+put 'estudiantes_bigdata', 'EST_182', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_182', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_182', 'academico:nota', '10.0'
+put 'estudiantes_bigdata', 'EST_182', 'contacto:email', 'estudiante182@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_182', 'contacto:telefono', '+34600000182'
+
+# Inserción para estudiante EST_183
+put 'estudiantes_bigdata', 'EST_183', 'personal:nombre', 'Maria Diaz'
+put 'estudiantes_bigdata', 'EST_183', 'personal:edad', '28'
+put 'estudiantes_bigdata', 'EST_183', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_183', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_183', 'academico:nota', '5.6'
+put 'estudiantes_bigdata', 'EST_183', 'contacto:email', 'estudiante183@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_183', 'contacto:telefono', '+34600000183'
+
+# Inserción para estudiante EST_184
+put 'estudiantes_bigdata', 'EST_184', 'personal:nombre', 'Juan Rodriguez'
+put 'estudiantes_bigdata', 'EST_184', 'personal:edad', '29'
+put 'estudiantes_bigdata', 'EST_184', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_184', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_184', 'academico:nota', '6.3'
+put 'estudiantes_bigdata', 'EST_184', 'contacto:email', 'estudiante184@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_184', 'contacto:telefono', '+34600000184'
+
+# Inserción para estudiante EST_185
+put 'estudiantes_bigdata', 'EST_185', 'personal:nombre', 'Elena Martinez'
+put 'estudiantes_bigdata', 'EST_185', 'personal:edad', '30'
+put 'estudiantes_bigdata', 'EST_185', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_185', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_185', 'academico:nota', '7.0'
+put 'estudiantes_bigdata', 'EST_185', 'contacto:email', 'estudiante185@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_185', 'contacto:telefono', '+34600000185'
+
+# Inserción para estudiante EST_186
+put 'estudiantes_bigdata', 'EST_186', 'personal:nombre', 'Pedro Ruiz'
+put 'estudiantes_bigdata', 'EST_186', 'personal:edad', '31'
+put 'estudiantes_bigdata', 'EST_186', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_186', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_186', 'academico:nota', '7.7'
+put 'estudiantes_bigdata', 'EST_186', 'contacto:email', 'estudiante186@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_186', 'contacto:telefono', '+34600000186'
+
+# Inserción para estudiante EST_187
+put 'estudiantes_bigdata', 'EST_187', 'personal:nombre', 'Sofia Perez'
+put 'estudiantes_bigdata', 'EST_187', 'personal:edad', '32'
+put 'estudiantes_bigdata', 'EST_187', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_187', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_187', 'academico:nota', '8.4'
+put 'estudiantes_bigdata', 'EST_187', 'contacto:email', 'estudiante187@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_187', 'contacto:telefono', '+34600000187'
+
+# Inserción para estudiante EST_188
+put 'estudiantes_bigdata', 'EST_188', 'personal:nombre', 'Diego Lopez'
+put 'estudiantes_bigdata', 'EST_188', 'personal:edad', '33'
+put 'estudiantes_bigdata', 'EST_188', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_188', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_188', 'academico:nota', '9.1'
+put 'estudiantes_bigdata', 'EST_188', 'contacto:email', 'estudiante188@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_188', 'contacto:telefono', '+34600000188'
+
+# Inserción para estudiante EST_189
+put 'estudiantes_bigdata', 'EST_189', 'personal:nombre', 'Lucia Navarro'
+put 'estudiantes_bigdata', 'EST_189', 'personal:edad', '34'
+put 'estudiantes_bigdata', 'EST_189', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_189', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_189', 'academico:nota', '9.8'
+put 'estudiantes_bigdata', 'EST_189', 'contacto:email', 'estudiante189@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_189', 'contacto:telefono', '+34600000189'
+
+# Inserción para estudiante EST_190
+put 'estudiantes_bigdata', 'EST_190', 'personal:nombre', 'Gabriel Gomez'
+put 'estudiantes_bigdata', 'EST_190', 'personal:edad', '35'
+put 'estudiantes_bigdata', 'EST_190', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_190', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_190', 'academico:nota', '5.4'
+put 'estudiantes_bigdata', 'EST_190', 'contacto:email', 'estudiante190@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_190', 'contacto:telefono', '+34600000190'
+
+# Inserción para estudiante EST_191
+put 'estudiantes_bigdata', 'EST_191', 'personal:nombre', 'Carmen Fernandez'
+put 'estudiantes_bigdata', 'EST_191', 'personal:edad', '36'
+put 'estudiantes_bigdata', 'EST_191', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_191', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_191', 'academico:nota', '6.1'
+put 'estudiantes_bigdata', 'EST_191', 'contacto:email', 'estudiante191@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_191', 'contacto:telefono', '+34600000191'
+
+# Inserción para estudiante EST_192
+put 'estudiantes_bigdata', 'EST_192', 'personal:nombre', 'Javier Sanchez'
+put 'estudiantes_bigdata', 'EST_192', 'personal:edad', '37'
+put 'estudiantes_bigdata', 'EST_192', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_192', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_192', 'academico:nota', '6.8'
+put 'estudiantes_bigdata', 'EST_192', 'contacto:email', 'estudiante192@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_192', 'contacto:telefono', '+34600000192'
+
+# Inserción para estudiante EST_193
+put 'estudiantes_bigdata', 'EST_193', 'personal:nombre', 'Marta Diaz'
+put 'estudiantes_bigdata', 'EST_193', 'personal:edad', '38'
+put 'estudiantes_bigdata', 'EST_193', 'personal:ciudad', 'Barcelona'
+put 'estudiantes_bigdata', 'EST_193', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_193', 'academico:nota', '7.5'
+put 'estudiantes_bigdata', 'EST_193', 'contacto:email', 'estudiante193@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_193', 'contacto:telefono', '+34600000193'
+
+# Inserción para estudiante EST_194
+put 'estudiantes_bigdata', 'EST_194', 'personal:nombre', 'Fernando Rodriguez'
+put 'estudiantes_bigdata', 'EST_194', 'personal:edad', '39'
+put 'estudiantes_bigdata', 'EST_194', 'personal:ciudad', 'Valencia'
+put 'estudiantes_bigdata', 'EST_194', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_194', 'academico:nota', '8.2'
+put 'estudiantes_bigdata', 'EST_194', 'contacto:email', 'estudiante194@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_194', 'contacto:telefono', '+34600000194'
+
+# Inserción para estudiante EST_195
+put 'estudiantes_bigdata', 'EST_195', 'personal:nombre', 'Laura Martinez'
+put 'estudiantes_bigdata', 'EST_195', 'personal:edad', '40'
+put 'estudiantes_bigdata', 'EST_195', 'personal:ciudad', 'Sevilla'
+put 'estudiantes_bigdata', 'EST_195', 'academico:modulo', 'Python_BigData'
+put 'estudiantes_bigdata', 'EST_195', 'academico:nota', '8.9'
+put 'estudiantes_bigdata', 'EST_195', 'contacto:email', 'estudiante195@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_195', 'contacto:telefono', '+34600000195'
+
+# Inserción para estudiante EST_196
+put 'estudiantes_bigdata', 'EST_196', 'personal:nombre', 'Pablo Ruiz'
+put 'estudiantes_bigdata', 'EST_196', 'personal:edad', '41'
+put 'estudiantes_bigdata', 'EST_196', 'personal:ciudad', 'Bilbao'
+put 'estudiantes_bigdata', 'EST_196', 'academico:modulo', 'Kafka'
+put 'estudiantes_bigdata', 'EST_196', 'academico:nota', '9.6'
+put 'estudiantes_bigdata', 'EST_196', 'contacto:email', 'estudiante196@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_196', 'contacto:telefono', '+34600000196'
+
+# Inserción para estudiante EST_197
+put 'estudiantes_bigdata', 'EST_197', 'personal:nombre', 'Beatriz Perez'
+put 'estudiantes_bigdata', 'EST_197', 'personal:edad', '42'
+put 'estudiantes_bigdata', 'EST_197', 'personal:ciudad', 'Zaragoza'
+put 'estudiantes_bigdata', 'EST_197', 'academico:modulo', 'Hive'
+put 'estudiantes_bigdata', 'EST_197', 'academico:nota', '5.2'
+put 'estudiantes_bigdata', 'EST_197', 'contacto:email', 'estudiante197@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_197', 'contacto:telefono', '+34600000197'
+
+# Inserción para estudiante EST_198
+put 'estudiantes_bigdata', 'EST_198', 'personal:nombre', 'Hugo Lopez'
+put 'estudiantes_bigdata', 'EST_198', 'personal:edad', '43'
+put 'estudiantes_bigdata', 'EST_198', 'personal:ciudad', 'Malaga'
+put 'estudiantes_bigdata', 'EST_198', 'academico:modulo', 'HBase'
+put 'estudiantes_bigdata', 'EST_198', 'academico:nota', '5.9'
+put 'estudiantes_bigdata', 'EST_198', 'contacto:email', 'estudiante198@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_198', 'contacto:telefono', '+34600000198'
+
+# Inserción para estudiante EST_199
+put 'estudiantes_bigdata', 'EST_199', 'personal:nombre', 'Irene Navarro'
+put 'estudiantes_bigdata', 'EST_199', 'personal:edad', '44'
+put 'estudiantes_bigdata', 'EST_199', 'personal:ciudad', 'Alicante'
+put 'estudiantes_bigdata', 'EST_199', 'academico:modulo', 'Spark'
+put 'estudiantes_bigdata', 'EST_199', 'academico:nota', '6.6'
+put 'estudiantes_bigdata', 'EST_199', 'contacto:email', 'estudiante199@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_199', 'contacto:telefono', '+34600000199'
+
+# Inserción para estudiante EST_200
+put 'estudiantes_bigdata', 'EST_200', 'personal:nombre', 'Carlos Gomez'
+put 'estudiantes_bigdata', 'EST_200', 'personal:edad', '20'
+put 'estudiantes_bigdata', 'EST_200', 'personal:ciudad', 'Madrid'
+put 'estudiantes_bigdata', 'EST_200', 'academico:modulo', 'Hadoop'
+put 'estudiantes_bigdata', 'EST_200', 'academico:nota', '7.3'
+put 'estudiantes_bigdata', 'EST_200', 'contacto:email', 'estudiante200@escuela.bigdata.es'
+put 'estudiantes_bigdata', 'EST_200', 'contacto:telefono', '+34600000200'
+
+# ------------------------------------------------------------------------------
+# PASO 3: CONSULTAS DE DATOS (READ OPERATIONS)
+# ------------------------------------------------------------------------------
+
+# 1. Consulta puntual por RowKey (Obtener toda la información del estudiante EST_005)
+get 'estudiantes_bigdata', 'EST_005'
+
+# 2. Consulta puntual de columnas específicas (Solo nombre y nota del estudiante EST_010)
+get 'estudiantes_bigdata', 'EST_010', {COLUMNS => ['personal:nombre', 'academico:nota']}
+
+# 3. Conteo total de filas en la tabla
+count 'estudiantes_bigdata'
+
+# 4. Escaneo acotado por rango de RowKeys (Obtener estudiantes del EST_001 al EST_010)
+# Nota: STOPROW es exclusivo, por lo que usamos 'EST_011' para incluir 'EST_010'.
+scan 'estudiantes_bigdata', {STARTROW => 'EST_001', STOPROW => 'EST_011'}
+
+# 5. Escaneo proyectando solo una Familia de Columnas (Ver solo datos académicos de los primeros 5 alumnos)
+scan 'estudiantes_bigdata', {STARTROW => 'EST_001', STOPROW => 'EST_006', COLUMNS => 'academico'}
+
+# 6. Escaneo con filtro de valor (Buscar estudiantes cuya ciudad sea 'Valencia')
+scan 'estudiantes_bigdata', {FILTER => "SingleColumnValueFilter('personal', 'ciudad', =, 'binary:Valencia')"}
+
+
+# ------------------------------------------------------------------------------
+# PASO 4: ACTUALIZACIONES DE DATOS Y CONTROL DE VERSIONES (UPDATES)
+# ------------------------------------------------------------------------------
+# En HBase, NO existe el comando 'UPDATE'. Para actualizar un dato se realiza
+# un nuevo 'put' sobre la misma RowKey y columna. HBase añade la nueva versión
+# con un timestamp más reciente sin borrar de inmediato la anterior.
+
+# Actualización 1: Subir la nota del estudiante EST_005 de su valor original a 9.5
+put 'estudiantes_bigdata', 'EST_005', 'academico:nota', '9.5'
+
+# Actualización 2: Volver a corregir la nota del estudiante EST_005 a 10.0 (Tercera versión)
+put 'estudiantes_bigdata', 'EST_005', 'academico:nota', '10.0'
+
+# Ver la versión más reciente del estudiante EST_005
+get 'estudiantes_bigdata', 'EST_005', {COLUMNS => 'academico:nota'}
+
+# Consultar EL HISTORIAL DE VERSIONES (gracias a VERSIONS => 3 configurado en el 'create')
+get 'estudiantes_bigdata', 'EST_005', {COLUMNS => 'academico:nota', VERSIONS => 3}
+
+
+# ------------------------------------------------------------------------------
+# PASO 5: ELIMINACIÓN PARCIAL Y TOTAL DE CELDAS (DELETE)
+# ------------------------------------------------------------------------------
+
+# 1. Borrado de un campo/columna específica (Eliminar el teléfono del estudiante EST_020)
+delete 'estudiantes_bigdata', 'EST_020', 'contacto:telefono'
+
+# Verificar que el teléfono ha sido marcado con una lápida (Tombstone) y ya no se muestra
+get 'estudiantes_bigdata', 'EST_020'
+
+# 2. Borrado completo de una fila entera (Eliminar al estudiante EST_200)
+deleteall 'estudiantes_bigdata', 'EST_200'
+
+# Verificar que el registro EST_200 ya no existe
+get 'estudiantes_bigdata', 'EST_200'
+
+
+# ------------------------------------------------------------------------------
+# PASO 6: PERSISTENCIA Y MANTENIMIENTO EN DISCO
+# ------------------------------------------------------------------------------
+# Volcar los datos almacenados en la MemStore (RAM) hacia archivos inmutables HFile en HDFS.
+flush 'estudiantes_bigdata'
+
+# Verificación final del estado de la tabla
+count 'estudiantes_bigdata'

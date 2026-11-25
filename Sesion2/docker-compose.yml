@@ -1,0 +1,17 @@
+services:
+  hbase:
+    image: afbueno/hbase
+    container_name: hbase
+    restart: unless-stopped
+    ports:
+      - "16010:16010"  # HBase Master UI
+      - "9090:9090"    # Thrift (opcional)
+      - "8080:8080"    # REST (opcional)
+      - "2181:2181"    # ZooKeeper (opcional)
+    networks:
+      - hbase-net
+
+networks:
+  hbase-net:
+    driver: bridge
+    name: red_docker_hbase

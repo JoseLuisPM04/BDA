@@ -1,0 +1,110 @@
+services:
+  namenode:
+    image: afbueno/bda:hadoop-namenode
+    container_name: hdfs-namenode
+    hostname: namenode
+    ports:
+      - "9870:9870"   # HDFS NameNode UI
+      - "9000:9000"   # HDFS RPC
+    environment:
+      - CLUSTER_NAME=demo
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - HDFS_SITE_dfs.replication=2
+      - HDFS_NAMENODE_USER=root
+      - HDFS_DATANODE_USER=root
+      - HDFS_SECONDARYNAMENODE_USER=root
+      - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+      # YARN básicos
+      - YARN_SITE_yarn.resourcemanager.hostname=resourcemanager
+      - YARN_SITE_yarn.nodemanager.aux-services=mapreduce_shuffle
+      - MAPRED_SITE_mapreduce.framework.name=yarn
+      - MAPRED_SITE_mapreduce.jobhistory.address=historyserver:10020
+      - MAPRED_SITE_mapreduce.jobhistory.webapp.address=historyserver:19888
+    volumes:
+      - ./data/namenode:/hadoop/dfs/name
+    networks: [hadoop]
+
+  datanode1:
+    image: afbueno/bda:hadoop-datanode
+    container_name: hdfs-datanode-1
+    hostname: datanode1
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - SERVICE_PRECONDITION=namenode:9870
+      - HDFS_NAMENODE_USER=root
+      - HDFS_DATANODE_USER=root
+      - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+    volumes:
+      - ./data/datanode1:/hadoop/dfs/data
+    ports:
+      - "9864:9864"   # DataNode1 UI
+    networks: [hadoop]
+
+  datanode2:
+    image: afbueno/bda:hadoop-datanode
+    container_name: hdfs-datanode-2
+    hostname: datanode2
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - SERVICE_PRECONDITION=namenode:9870
+      - HDFS_NAMENODE_USER=root
+      - HDFS_DATANODE_USER=root
+      - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+    volumes:
+      - ./data/datanode2:/hadoop/dfs/data
+    ports:
+      - "9865:9864"   # DataNode2 UI (externo distinto)
+    networks: [hadoop]
+
+  resourcemanager:
+    image: afbueno/bda:hadoop-resourcemanager
+    container_name: yarn-resourcemanager
+    hostname: resourcemanager
+    depends_on: [namenode]
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - YARN_CONF_yarn_resourcemanager_hostname=resourcemanager
+      - YARN_CONF_yarn_log___aggregation___enable=true
+      - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+      - SERVICE_PRECONDITION=namenode:9870
+    ports:
+      - "8088:8088"   # YARN UI
+    networks: [hadoop]
+
+  nodemanager:
+    image: afbueno/bda:hadoop-nodemanager
+    container_name: yarn-nodemanager-1
+    hostname: nodemanager1
+    depends_on: [resourcemanager]
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - YARN_CONF_yarn_resourcemanager_hostname=resourcemanager
+      - YARN_CONF_yarn_nodemanager_resource_memory___mb=2048
+      - YARN_CONF_yarn_nodemanager_resource_cpu___vcores=2
+      - YARN_CONF_yarn_nodemanager_aux___services=mapreduce_shuffle
+      - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+      - SERVICE_PRECONDITION=resourcemanager:8088
+    ports:
+      - "8042:8042"   # NodeManager UI
+    networks: [hadoop]
+
+  historyserver:
+    image: afbueno/bda:hadoop-historyserver
+    container_name: mr-historyserver
+    hostname: historyserver
+    depends_on: [namenode, resourcemanager]
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+      - MAPRED_SITE_mapreduce.jobhistory.address=historyserver:10020
+      - MAPRED_SITE_mapreduce.jobhistory.webapp.address=0.0.0.0:19888
+      - SERVICE_PRECONDITION=namenode:9870 resourcemanager:8088
+    ports:
+      - "19888:19888" # JobHistory UI
+    networks: [hadoop]
+
+networks:
+  hadoop:
+    driver: bridge
+    name: red_docker_hadoop
+

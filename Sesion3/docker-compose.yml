@@ -1,0 +1,85 @@
+version: '3.8'
+
+services:
+  namenode:
+    image: afbueno/bda:hadoop-namenode
+    container_name: hdfs-namenode
+    hostname: namenode
+    ports:
+      - "9870:9870"   # HDFS NameNode Web UI
+      - "9000:9000"   # HDFS RPC
+    environment:
+      - CLUSTER_NAME=demo
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - HDFS_SITE_dfs.replication=2
+      - HDFS_NAMENODE_USER=root
+      - HDFS_DATANODE_USER=root
+      - HDFS_SECONDARYNAMENODE_USER=root
+      - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+    volumes:
+      - ./data/namenode:/hadoop/dfs/name
+    networks:
+      - hadoop
+
+  datanode1:
+    image: afbueno/bda:hadoop-datanode
+    container_name: hdfs-datanode-1
+    hostname: datanode1
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - SERVICE_PRECONDITION=namenode:9870
+      - HDFS_NAMENODE_USER=root
+      - HDFS_DATANODE_USER=root
+      - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+    volumes:
+      - ./data/datanode1:/hadoop/dfs/data
+    ports:
+      - "9864:9864"   # DataNode 1 Web UI
+    networks:
+      - hadoop
+
+  datanode2:
+    image: afbueno/bda:hadoop-datanode
+    container_name: hdfs-datanode-2
+    hostname: datanode2
+    environment:
+      - CORE_CONF_fs_defaultFS=hdfs://namenode:9000
+      - SERVICE_PRECONDITION=namenode:9870
+      - HDFS_NAMENODE_USER=root
+      - HDFS_DATANODE_USER=root
+      - JAVA_HOME=/usr/lib/jvm/java-8-openjdk-amd64
+    volumes:
+      - ./data/datanode2:/hadoop/dfs/data
+    ports:
+      - "9865:9864"   # DataNode 2 Web UI
+    networks:
+      - hadoop
+
+  hbase:
+    image: afbueno/hbase
+    container_name: hbase
+    hostname: hbase
+    restart: unless-stopped
+    depends_on:
+      - namenode
+      - datanode1
+      - datanode2
+    environment:
+      - HBASE_CONF_hbase_rootdir=hdfs://namenode:9000/hbase
+      - HBASE_CONF_hbase_cluster_distributed=true
+      - HBASE_CONF_hbase_zookeeper_quorum=hbase
+      - SERVICE_PRECONDITION=namenode:9870
+    ports:
+      - "16010:16010"  # HBase Master Web UI
+      - "9090:9090"    # Thrift API
+      - "8080:8080"    # REST API
+      - "2181:2181"    # Embedded ZooKeeper
+    volumes:
+      - ./hbase-conf:/hbase/conf
+      - ./hbase-conf:/hbase-2.1.3/conf
+    networks:
+      - hadoop
+
+networks:
+  hadoop:
+    driver: bridge

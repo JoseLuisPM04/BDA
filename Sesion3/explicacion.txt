@@ -1,0 +1,9 @@
+El archivo hbase-site.xml es el documento de configuracion principal que utiliza HBase para saber como comportarse y con que otros sistemas comunicarse. Funciona mediante un formato de etiquetas (<property>, <name>, <value>) donde se definen parametros clave.
+
+Asi es como se uso en esta configuracion para que el flush funcionara:
+
+* Que es: Un archivo de texto en formato XML que contiene la receta de configuracion de HBase.
+* hbase.rootdir: Le indica a HBase la ruta exacta de HDFS (hdfs://namenode:9000/hbase) donde debe escribir permanentemente los datos cuando vacia la memoria (hace el flush).
+* hbase.cluster.distributed: Se activa en true para avisarle a HBase que no trabaje de forma aislada en local, sino repartiendo los datos dentro del cluster de Hadoop.
+* hbase.zookeeper.quorum: Define el coordinador (hbase) que gestiona el estado de los componentes del cluster.
+* Como se uso en Docker: Se creo el archivo en la maquina local (./hbase-conf) y se me conecto mediante la seccion volumes del docker-compose.yml para que el contenedor de HBase lo lea automaticamente al arrancar.
