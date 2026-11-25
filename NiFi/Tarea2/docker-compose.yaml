@@ -1,0 +1,109 @@
+services:
+  hbase:
+    image: harisekhon/hbase:2.1
+    container_name: hbase
+    hostname: hbase
+    networks:
+      - bigdata
+    ports:
+      - "16000:16000"
+      - "16010:16010" # Web UI HBase Master
+      - "16020:16020"
+      - "16030:16030"
+      - "2181:2181" # ZooKeeper embebido
+    volumes:
+      - hbase_data:/hbase-data
+
+  neo4j:
+    image: neo4j:5
+    container_name: neo4j
+    hostname: neo4j
+    networks:
+      - bigdata
+    ports:
+      - "7474:7474" # Web UI Neo4j
+      - "7687:7687" # Bolt
+    environment:
+      - NEO4J_AUTH=neo4j/password
+      - NEO4J_PLUGINS=["apoc"]
+      - NEO4J_apoc_export_file_enabled=true
+      - NEO4J_apoc_import_file_enabled=true
+    volumes:
+      - neo4j_data:/data
+
+  minio:
+    image: cgr.dev/chainguard/minio:latest
+    container_name: minio
+    hostname: minio
+    networks:
+      - bigdata
+    ports:
+      - "9000:9000" # API S3 para NiFi (Endpoint: http://minio:9000)
+      - "9001:9001" # Consola Web MinIO
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=password123
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio_data:/data
+  nifi:
+    image: apache/nifi:2.6.0
+    container_name: nifi
+    hostname: nifi
+    user: root
+    networks:
+      - bigdata
+    depends_on:
+      - hbase
+      - neo4j
+      - minio
+    ports:
+      - "8443:8443" # Interfaz HTTPS de NiFi 2 6 0
+    environment:
+      - NIFI_JVM_HEAP_INIT=1g
+      - NIFI_JVM_HEAP_MAX=2g
+      - NIFI_WEB_HTTPS_PORT=8443
+      - NIFI_WEB_PROXY_HOST=localhost:8443
+      - SINGLE_USER_CREDENTIALS_USERNAME=admin
+      - SINGLE_USER_CREDENTIALS_PASSWORD=SuperPassword12345
+    volumes:
+      - nifi_conf:/opt/nifi/nifi-current/conf
+      - nifi_data:/opt/nifi/nifi-current/database_repository
+      - nifi_flowfile:/opt/nifi/nifi-current/flowfile_repository
+      - nifi_content:/opt/nifi/nifi-current/content_repository
+      - nifi_provenance:/opt/nifi/nifi-current/provenance_repository
+      - ./hbase-conf:/opt/nifi/hbase-conf:ro
+      - ./entrada_json:/opt/nifi/entrada_json
+      - ./errores:/opt/nifi/errores
+    entrypoint: >
+      bash -c "
+      LIB_DIR=/opt/nifi/nifi-current/lib;
+      BASE=https://repo1.maven.org/maven2/org/apache/nifi;
+      VER=2.6.0;
+      if [ ! -f $$LIB_DIR/nifi-neo4j-cypher-service-nar-$$VER.nar ]; then
+        echo 'Descargando NARs de Neo4j y HBase para NiFi '$$VER'...';
+        curl -fsSL -o $$LIB_DIR/nifi-graph-nar-$$VER.nar $$BASE/nifi-graph-nar/$$VER/nifi-graph-nar-$$VER.nar;
+        curl -fsSL -o $$LIB_DIR/nifi-neo4j-cypher-service-nar-$$VER.nar $$BASE/nifi-neo4j-cypher-service-nar/$$VER/nifi-neo4j-cypher-service-nar-$$VER.nar;
+        curl -fsSL -o $$LIB_DIR/nifi-graph-client-service-api-nar-$$VER.nar $$BASE/nifi-graph-client-service-api-nar/$$VER/nifi-graph-client-service-api-nar-$$VER.nar;
+        curl -fsSL -o $$LIB_DIR/nifi-hadoop-libraries-nar-$$VER.nar $$BASE/nifi-hadoop-libraries-nar/$$VER/nifi-hadoop-libraries-nar-$$VER.nar;
+        curl -fsSL -o $$LIB_DIR/nifi-hadoop-nar-$$VER.nar $$BASE/nifi-hadoop-nar/$$VER/nifi-hadoop-nar-$$VER.nar;
+        curl -fsSL -o $$LIB_DIR/nifi-hbase_2-client-service-nar-$$VER.nar $$BASE/nifi-hbase_2-client-service-nar/$$VER/nifi-hbase_2-client-service-nar-$$VER.nar;
+        curl -fsSL -o $$LIB_DIR/nifi-hbase-nar-$$VER.nar $$BASE/nifi-hbase-nar/$$VER/nifi-hbase-nar-$$VER.nar;
+        chown -R nifi:nifi $$LIB_DIR;
+      fi;
+      su nifi -c '/opt/nifi/scripts/start.sh'
+      "
+
+networks:
+  bigdata:
+    driver: bridge
+
+volumes:
+  hbase_data:
+  neo4j_data:
+  minio_data:
+  nifi_conf:
+  nifi_data:
+  nifi_flowfile:
+  nifi_content:
+  nifi_provenance:
