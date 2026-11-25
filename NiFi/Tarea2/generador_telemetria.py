@@ -21,7 +21,7 @@ try:
         nombre_final = os.path.join(CARPETA_SALIDA, f"telemetria_{contador:04d}.json")
         dado = random.random()
         if dado < 0.10:
-        # 10% de JSON malformado para probar la rama de errores (DLQ)
+            # 10% de JSON malformado para probar la rama de errores (DLQ)
             contenido = '{"id_evento": ' + str(contador) + ', "estacion": "CORRUPTO_SIN_CIERRE"}'
 
             with open(nombre_tmp, "w", encoding="utf-8") as f:
